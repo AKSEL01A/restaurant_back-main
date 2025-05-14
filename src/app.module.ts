@@ -45,20 +45,26 @@ import { CustomerService } from './customer/customer.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forRootAsync({
-      imports: [CustomConfigModule],
-      useFactory: () => ({
-        type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        username: 'postgres',
-        password: '0000',
-        database: 'restaurants',
-        entities: [Restaurant, User, RoleUser, TableRestaurant, MenuRestaurant, Plat, ReservationTable, ReservationTime, SystemConfig, Bloc, RestaurantImage, RestaurantBloc, MealTimeEntity],
-        synchronize: true,
-        logging: true,
-      }),
-    }),
+TypeOrmModule.forRootAsync({
+  imports: [CustomConfigModule],
+  useFactory: () => ({
+  type: 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 5432,
+  username: process.env.DB_USERNAME || 'postgres',
+  password: process.env.DB_PASSWORD || '0000',
+  database: process.env.DB_NAME || 'restaurants',
+  entities: [
+    Restaurant, User, RoleUser, TableRestaurant, MenuRestaurant,
+    Plat, ReservationTable, ReservationTime, SystemConfig, Bloc,
+    RestaurantImage, RestaurantBloc, MealTimeEntity
+  ],
+  synchronize: true,
+  logging: true,
+}),
+
+}),
+
 
     TypeOrmModule.forFeature([User, RoleUser, Restaurant, TableRestaurant, MenuRestaurant, Plat, ReservationTable, ReservationTime, SystemConfig, Bloc, RestaurantImage, RestaurantBloc, MealTimeEntity]),
     RestaurantModule,
