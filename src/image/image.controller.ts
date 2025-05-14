@@ -8,6 +8,7 @@ import {
   import { diskStorage } from 'multer';
   import { v4 as uuidv4 } from 'uuid';
   import { extname } from 'path';
+  import { Express } from 'express';
   
   @Controller('upload')
   export class ImageController {
