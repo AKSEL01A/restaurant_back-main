@@ -72,10 +72,11 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async createUser(createUserDto: CreateUserDto) {
-    const { email, name, lastname, role, phone, password, dateDebutContrat } = createUserDto;
+async createUser(createUserDto: CreateUserDto) {
+  console.log('➡️ Payload reçu:', createUserDto);
+  const { email, name, lastname, role, phone, password, dateDebutContrat } = createUserDto;
 
-
+  try {
     const existingUser = await this.userRepository.findOneBy({ email });
     if (existingUser) {
       throw new BadRequestException('Cet utilisateur existe déjà.');
@@ -84,14 +85,10 @@ export class UserService {
     if (role === 'admin') {
       throw new BadRequestException("Un admin ne peut pas créer un autre admin.");
     }
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    // const randomPassword = this.generateRandomPassword();
-    // console.log('Generated Password:', randomPassword);
-    // const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     let roleEntity = await this.roleRepository.findOneBy({ name: role });
-
     if (!roleEntity) {
       roleEntity = this.roleRepository.create({ name: role });
       await this.roleRepository.save(roleEntity);
@@ -102,15 +99,19 @@ export class UserService {
       name,
       lastname,
       phone,
-      dateDebutContrat,
+      dateDebutContrat: dateDebutContrat ? new Date(dateDebutContrat) : undefined,
       password: hashedPassword,
-      // password: hashedPassword,
       role: roleEntity,
     });
 
-    return this.userRepository.save(newUser);
+    return await this.userRepository.save(newUser);
 
+  } catch (err) {
+    console.error("❌ Erreur lors de la création de l'utilisateur:", err);
+    throw new BadRequestException("Erreur serveur lors de la création de l'utilisateur.");
   }
+}
+
   async getUserById(id: string) {
     const user = await this.userRepository.findOne({
       where: { id },
