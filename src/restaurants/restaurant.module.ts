@@ -8,10 +8,10 @@ import { AuthModule } from 'src/auth/auth.module';
 import { RestaurantBloc } from './entities/Restaurant-Bloc.entity';
 import { Bloc } from 'src/bloc/entities/bloc.entity';
 import { RestaurantImage } from 'src/image/image.entity';
-
+import { MealTimeModule } from 'src/reservations/meal-time/meal-time.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Restaurant, Bloc, RestaurantBloc, RestaurantImage]), AuthModule,],
+  imports: [TypeOrmModule.forFeature([Restaurant, Bloc, RestaurantBloc, RestaurantImage,MealTimeModule]), AuthModule,],
   controllers: [RestaurantController],
   providers: [RestaurantService, RestaurantRepository],
   exports: [RestaurantService, RestaurantRepository],
