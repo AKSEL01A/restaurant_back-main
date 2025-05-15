@@ -176,14 +176,22 @@ export class RestaurantService {
     restaurant.restaurantBlocs = [];
 
     for (const blocData of restaurantBlocs) {
+      if (!blocData.blocId) {
+        throw new BadRequestException(`blocId manquant pour un des blocs.`);
+      }
       const bloc = await this.blocRepository.findOneBy({ id: blocData.blocId });
       if (!bloc) {
         throw new NotFoundException(`Bloc avec ID ${blocData.blocId} introuvable`);
       }
 
-      if (!blocData.maxTables) {
-        throw new BadRequestException(`maxTables est requis pour le bloc ${bloc.id}`);
+      if (blocData.maxTables === undefined || blocData.maxTables <= 0) {
+        throw new BadRequestException(`maxTables est requis et doit être > 0 pour le bloc ${bloc.id}`);
       }
+
+      if (blocData.maxChaises === undefined || blocData.maxChaises <= 0) {
+        throw new BadRequestException(`maxChaises est requis et doit être > 0 pour le bloc ${bloc.id}`);
+      }
+
 
       const restaurantBloc = new RestaurantBloc();
       restaurantBloc.bloc = bloc;
