@@ -11,7 +11,7 @@ import { RestaurantImage } from 'src/image/image.entity';
 import { MealTimeModule } from 'src/reservations/meal-time/meal-time.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Restaurant, Bloc, RestaurantBloc, RestaurantImage,MealTimeModule]), AuthModule,],
+  imports: [TypeOrmModule.forFeature([Restaurant, Bloc, RestaurantBloc, RestaurantImage]), AuthModule,MealTimeModule],
   controllers: [RestaurantController],
   providers: [RestaurantService, RestaurantRepository],
   exports: [RestaurantService, RestaurantRepository],
