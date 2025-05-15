@@ -10,9 +10,5 @@ export class CreateBlocDto {
 
 
 
-  @ApiProperty({ enum: BlocStatus })
-  @IsEnum(BlocStatus, {
-    message: 'Le status doit être soit "true" soit "false"',
-  })
-  status: BlocStatus;
+ 
 }
