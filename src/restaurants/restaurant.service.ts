@@ -51,6 +51,9 @@ export class RestaurantService {
   //   return fetchedRestaurant;
   // }
 
+ async countRestaurants(): Promise<number> {
+    return this.restaurantRepository.count();
+  }
 
 
   async getRestaurantById(id: string) {
