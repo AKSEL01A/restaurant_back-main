@@ -10,7 +10,7 @@ import { MealTimeService } from 'src/reservations/meal-time/meal-time.service';
 
 
 
-
+///restaurant main
 // @ApiBearerAuth('access-token')
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,7 +19,7 @@ import { MealTimeService } from 'src/reservations/meal-time/meal-time.service';
 @Controller('restaurant')
 export class RestaurantController {
   constructor(private readonly restaurantService: RestaurantService,
-              private readonly mealTimeService: MealTimeService) { }
+    private readonly mealTimeService: MealTimeService) { }
 
   @Get('count')
   @Roles('admin')
@@ -44,7 +44,7 @@ export class RestaurantController {
     console.log("ID reçu :", id);
     return this.restaurantService.getRestaurantById(id);
   }
- @Get(':restaurantId/meal-times')
+  @Get(':restaurantId/meal-times')
   getMealTimes(@Param('restaurantId') id: string) {
     return this.mealTimeService.getMealTimesByRestaurant(id);
   }
