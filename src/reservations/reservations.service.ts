@@ -498,6 +498,24 @@ export class ReservationsService {
     };
   }
 
+
+
+  async getUnavailableTables(restaurantId: string, date: string, time: string): Promise<string[]> {
+  const reservations = await this.reservationRepository
+    .createQueryBuilder('reservation')
+    .leftJoin('reservation.table', 'table')
+    .leftJoin('reservation.reservationTime', 'timeSlot')
+    .where('timeSlot.date2 = :date', { date })
+    .andWhere('timeSlot.startTime <= :time AND timeSlot.endTime > :time', { time })
+    .andWhere('table.restaurant.id = :restaurantId', { restaurantId })
+    .andWhere('reservation.isCancelled = false')
+    .getMany();
+
+  return reservations
+  .map((res) => res.table?.id)
+  .filter((id): id is string => typeof id === 'string'); // filtre les undefined
+  }
+
   async deleteReservation(id: string, user: User) {
     const reservation = await this.reservationRepository.findOne({
       where: { id },

@@ -172,7 +172,19 @@ export class TablesService {
     return await this.TableRepository.save(table);
   }
 
-
+   async getTablesByRestaurant(restaurantId: string) {
+  return await this.TableRepository.find({
+    where: {
+      restaurantBloc: {
+        restaurant: {
+          id: restaurantId,
+        },
+      },
+    },
+    relations: ['restaurantBloc', 'restaurantBloc.restaurant'],
+  });
+  }
+ 
 
   async delete(id: string) {
     const table = await this.TableRepository.findOne({ where: { id } });

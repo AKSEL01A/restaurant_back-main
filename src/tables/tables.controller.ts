@@ -40,6 +40,14 @@ export class TablesController {
     return this.tableService.getTableById(id);
   }
 
+
+  @Roles('manager', 'Customer', 'admin')
+  @Get('restaurant/:restaurantId')
+  async getTablesByRestaurant(@Param('restaurantId') restaurantId: string) {
+  return this.tableService.getTablesByRestaurant(restaurantId);
+  }
+
+
   @Roles('manager', 'admin')
   @Patch(':id')
   async updateTable(@Param('id') id: string, @Body() UpdateTableDto: UpdateTableDto) {
