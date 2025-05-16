@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './types/dtos/create-reservation.dto';
@@ -41,6 +41,28 @@ export class ReservationController {
   async getReportedCount(): Promise<number> {
     return this.reservationService.countReported();
   }
+
+
+  @Get('availability')
+@Roles('admin', 'customer', 'serveur', 'manager')
+async checkAvailability(
+  @Query('restaurantId') restaurantId: string,
+  @Query('date') date: string,
+  @Query('time') time: string
+) {
+  if (!restaurantId || !date || !time) {
+    throw new BadRequestException('Paramètres requis manquants');
+  }
+
+  const reservedTables = await this.reservationService.getUnavailableTables(
+    restaurantId,
+    date,
+    time
+  );
+
+  return reservedTables;
+}
+
 
 
   @Get('count-by-date')
