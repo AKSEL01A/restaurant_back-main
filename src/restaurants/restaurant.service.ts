@@ -320,5 +320,42 @@ export class RestaurantService {
       relations: ['menuRestaurant', 'menuRestaurant.plats'],
     });
   }
+async deleteBlocFromRestaurant(restaurantId: string, blocId: string): Promise<void> {
+    const restaurant = await this.restaurantRepository.findOne({
+      where: { id: restaurantId },
+      relations: [
+        'restaurantBlocs',
+        'restaurantBlocs.tables',
+        'restaurantBlocs.tables.reservations',
+        'restaurantBlocs.tables.reservations.reservationTime',
+      ],
+    });
+
+
+    if (!restaurant) {
+      throw new NotFoundException('Le restaurant est introuvable.');
+
+    }
+
+    const bloc = restaurant.restaurantBlocs.find(bloc => bloc.id === blocId);
+
+    if (!bloc) {
+      throw new NotFoundException('Le bloc spécifié n’existe pas.');
+
+    }
+
+    const hasActiveReservations = bloc.tables.some(table =>
+      table.reservations?.some(res => res.reservationTime?.isActive)
+    );
+
+
+    if (hasActiveReservations) {
+      throw new BadRequestException('Impossible de supprimer ce bloc : des tables ont des réservations actives.');
+    }
+
+
+    restaurant.restaurantBlocs = restaurant.restaurantBlocs.filter(b => b.id !== blocId);
+    await this.restaurantRepository.save(restaurant);
+  }
 
 }
