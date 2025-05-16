@@ -83,7 +83,16 @@ export class RestaurantController {
     return this.restaurantService.getRestaurantWithMenus(id);
   }
 
+@Delete(':restaurantId/bloc/:blocId')
+  async removeBlocFromRestaurant(
 
+    @Param('restaurantId') restaurantId: string,
+    @Param('blocId') blocId: string,
+  ): Promise<{ message: string }> {
+
+    await this.restaurantService.deleteBlocFromRestaurant(restaurantId, blocId);
+    return { message: 'Bloc supprimé avec succès ' };
+  }
 }
 
 
