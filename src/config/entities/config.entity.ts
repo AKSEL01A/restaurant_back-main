@@ -18,7 +18,8 @@ export class SystemConfig {
   @Column({ default: 2 })
   maxReportAllowed: number;
 
-
+  @Column({ default: 30 })
+  confirmationDeadlineBeforeReservation: number;
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
