@@ -122,10 +122,11 @@ async checkAvailability(
     return await this.reservationService.confirmReservationByQrCode(reservationId);
   }
 
-  @Get('confirm-by-customer/:reservationId')
+   @Patch(':id/confirm-by-customer')
   @Roles('admin', 'customer', 'serveur')
-  async confirmByCustomer(@Param('reservationId') reservationId: string) {
-    return this.reservationService.confirmReservationByCustomer(reservationId);
+
+  async confirmByCustomer(@Param('id') id: string) {
+    return this.reservationService.confirmReservationByCustomer(id);
   }
 
 }
