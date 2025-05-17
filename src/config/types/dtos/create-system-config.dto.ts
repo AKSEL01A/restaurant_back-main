@@ -17,6 +17,8 @@ export class CreateSystemConfigDto {
   @ApiProperty({ default: 2 })
   @IsInt()
   maxReportAllowed: number;
-
+  @ApiProperty({ default: 30 })
+  @IsInt()
+  confirmationDeadlineBeforeReservation
   
 }
