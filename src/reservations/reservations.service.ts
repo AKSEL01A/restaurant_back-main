@@ -146,6 +146,36 @@ export class ReservationsService {
 
 
 
+  @Cron(CronExpression.EVERY_MINUTE)
+  async autoCancelUnconfirmedReservations() {
+    const config = await this.systemConfigRepository.findOneBy({});
+    if (!config || typeof config.confirmationDeadlineBeforeReservation !== 'number') return;
+
+    const deadline = config.confirmationDeadlineBeforeReservation;
+    const now = moment();
+
+    const reservations = await this.reservationRepository.find({
+      where: {
+        status: ReservationStatus.ACTIVE,
+        confirmedByCustomer: false,
+      },
+      relations: ['reservationTime'],
+    });
+
+    for (const res of reservations) {
+      const { date2, startTime } = res.reservationTime || {};
+      if (!date2 || !startTime) continue;
+
+      const startMoment = moment(`${date2}T${startTime}`);
+      const diff = startMoment.diff(now, 'minutes');
+
+      if (startMoment.isAfter(now) && diff <= deadline) {
+        res.status = ReservationStatus.NO_CONFIRMATION;
+        res.isCancelled = true;
+        await this.reservationRepository.save(res);
+      }
+    }
+  }
 
 
 
@@ -572,17 +602,24 @@ export class ReservationsService {
   }
 
 
-  async confirmReservationByCustomer(reservationId: string): Promise<ReservationTable> {
-    const reservation = await this.reservationRepository.findOneBy({ id: reservationId });
+
+  async confirmReservationByCustomer(id: string): Promise<ReservationTable> {
+    const reservation = await this.reservationRepository.findOne({
+      where: { id },
+    });
 
     if (!reservation) {
-      throw new NotFoundException('Reservation not found');
+      throw new NotFoundException('Réservation introuvable');
+    }
+
+    if (reservation.confirmedByCustomer) {
+      throw new BadRequestException('Réservation déjà confirmée par le client');
     }
 
     reservation.confirmedByCustomer = true;
-    await this.reservationRepository.save(reservation);
+    reservation.status = ReservationStatus.CONFIRMED;
 
-    return reservation;
+    return this.reservationRepository.save(reservation);
   }
 
 
