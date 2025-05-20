@@ -111,7 +111,7 @@ export class AuthService {
 
   const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-  const role = await this.roleRepository.findOneBy({ name: 'client' }); // ou 'serveur' par défaut
+  const role = await this.roleRepository.findOneBy({ name: 'customer' });
   if (!role) throw new Error('Rôle invalide');
 
   const newUser = this.userRepository.create({
