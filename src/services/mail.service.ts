@@ -1,61 +1,44 @@
-import * as nodemailer from 'nodemailer';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
+import * as sgTransport from 'nodemailer-sendgrid-transport';
+
 @Injectable()
 export class MailService {
-//   private transporter = nodemailer.createTransport({
-//     service: 'gmail',
-//     // host: 'smtp.gmail.com',
-//     //port: 587,
-//     auth: {
-//         user: this.config.get('MAIL_USER'),
-//         pass: this.config.get('MAIL_PASS'),
-      
-//     },
-//   });
+  private transporter;
 
-private transporter;
-
-constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: this.config.get('MAIL_USER'),
-    pass: this.config.get('MAIL_PASS'),
-  },
-});
-
-
+  constructor(private config: ConfigService) {
+    this.transporter = nodemailer.createTransport(
+      sgTransport({
+        auth: {
+          api_key: this.config.get<string>('SENDGRID_API_KEY'),
+        },
+      }),
+    );
   }
 
   async sendMail({
-  to,
-  subject,
-  text,
-}: {
-  to: string;
-  subject: string;
-  text: string;
-}) {
-  console.log('📤 Preparing to send email...');
-  console.log('📨 To:', to);
-  console.log('📧 MAIL_USER:', this.config.get('MAIL_USER'));
-  console.log('🔐 MAIL_PASS:', this.config.get('MAIL_PASS'));
+    to,
+    subject,
+    text,
+  }: {
+    to: string;
+    subject: string;
+    text: string;
+  }) {
+    console.log('📤 Envoi via SendGrid...');
+    try {
+      const result = await this.transporter.sendMail({
+        from: 'reservinipfe@gmail.com', // 🟢 هذا الإيميل لازم يكون "Verified"
+        to,
+        subject,
+        text,
+      });
 
-  try {
-    const result = await this.transporter.sendMail({
-      from: `"Ton App" <${this.config.get('MAIL_USER')}>`,
-      to,
-      subject,
-      text,
-    });
-
-    console.log('✅ Email sent successfully:', result);
-  } catch (error) {
-    console.error('❌ Email send failed:', error);
-    throw new Error('Erreur lors de l’envoi de l’email: ' + error.message);
+      console.log('✅ Email envoyé:', result);
+    } catch (error) {
+      console.error('❌ Erreur SendGrid:', error);
+      throw new Error('Erreur lors de l’envoi de l’email: ' + error.message);
+    }
   }
-}
-
-  
 }
