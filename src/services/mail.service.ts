@@ -1,20 +1,20 @@
+import * as nodemailer from 'nodemailer';
+import * as sgTransport from 'nodemailer-sendgrid-transport'; // ✅ Import correct
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import * as sgTransport from 'nodemailer-sendgrid-transport';
 
 @Injectable()
 export class MailService {
   private transporter;
 
   constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport(
-      sgTransport({
-        auth: {
-          api_key: this.config.get<string>('SENDGRID_API_KEY'),
-        },
-      }),
-    );
+    const options = {
+      auth: {
+        api_key: this.config.get('SENDGRID_API_KEY'),
+      },
+    };
+
+    this.transporter = nodemailer.createTransport(sgTransport(options)); // ✅ Utilisation correcte
   }
 
   async sendMail({
@@ -26,18 +26,17 @@ export class MailService {
     subject: string;
     text: string;
   }) {
-    console.log('📤 Envoi via SendGrid...');
     try {
       const result = await this.transporter.sendMail({
-        from: 'reservinipfe@gmail.com', // 🟢 هذا الإيميل لازم يكون "Verified"
+        from: `"Ton App" <${this.config.get('MAIL_USER')}>`,
         to,
         subject,
         text,
       });
 
-      console.log('✅ Email envoyé:', result);
+      console.log('✅ Email sent:', result);
     } catch (error) {
-      console.error('❌ Erreur SendGrid:', error);
+      console.error('❌ Email send failed:', error);
       throw new Error('Erreur lors de l’envoi de l’email: ' + error.message);
     }
   }
