@@ -18,13 +18,13 @@ private transporter;
 
 constructor(private config: ConfigService) {
     this.transporter = nodemailer.createTransport({
-        host: "sandbox.smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-          user: "e0ef9982aa1083",
-          pass: "fd046049c1e693"
-        }
-      });
+  service: 'gmail',
+  auth: {
+    user: this.config.get('MAIL_USER'),
+    pass: this.config.get('MAIL_PASS'),
+  },
+});
+
   }
 
   async sendMail({
