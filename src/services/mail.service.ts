@@ -1,5 +1,5 @@
 import * as nodemailer from 'nodemailer';
-import * as sgTransport from 'nodemailer-sendgrid-transport'; // ✅ Import correct
+const sgTransport = require('nodemailer-sendgrid-transport');
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
