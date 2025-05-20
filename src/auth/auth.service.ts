@@ -30,7 +30,7 @@ export class AuthService {
   ) { }
 
 
-  async sendResetPasswordEmail(email: string) {
+  /*async sendResetPasswordEmail(email: string) {
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('Utilisateur introuvable');
@@ -50,7 +50,29 @@ export class AuthService {
       subject: 'Réinitialisation de mot de passe',
       text: `Cliquez <a href="${resetLink}">ici</a> pour réinitialiser votre mot de passe.`
     });
+  }*/
+
+
+    async sendResetPasswordEmail(email: string) {
+  const user = await this.userService.findByEmail(email);
+  if (!user) {
+    throw new NotFoundException('Utilisateur introuvable');
   }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 🔐 OTP à 6 chiffres
+  const expires = new Date(Date.now() + 10 * 60 * 1000); // expire dans 10 minutes
+
+  user.resetToken = otp;
+  user.resetTokenExpires = expires;
+  await this.userService.save(user);
+
+  await this.mailService.sendMail({
+    to: user.email,
+    subject: 'Code de réinitialisation de mot de passe',
+    text: `Votre code de réinitialisation est : ${otp}. Il est valable 10 minutes.`,
+  });
+}
+  
 
 
 
@@ -138,7 +160,7 @@ export class AuthService {
   }
 
 
-  async resetPassword(token: string, newPassword: string) {
+  /*async resetPassword(token: string, newPassword: string) {
     console.log('TOKEN:', token);
     const user = await this.userService.findByResetToken(token);
     console.log('USER:', user);
@@ -150,7 +172,24 @@ export class AuthService {
     user.resetToken = null;
     user.resetTokenExpires = null;
     await this.userService.save(user);
+  }*/
+
+    async resetPassword(email: string, otp: string, newPassword: string) {
+  const user = await this.userService.findByEmail(email);
+  if (!user || user.resetToken !== otp) {
+    throw new BadRequestException('Code invalide');
   }
+
+  if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+    throw new BadRequestException('Code expiré');
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.resetToken = null;
+  user.resetTokenExpires = null;
+  await this.userService.save(user);
+}
+
 
 
   async changePassword(userId: string, oldPassword: string, newPassword: string, confirmPassword: string) {

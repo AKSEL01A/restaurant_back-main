@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Param, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Param, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
 import { SignupDto } from './types/dtos/signup.dto';
@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './guards/auth.guard';
 import { ResetPasswordDto } from './types/dtos/reset-password.dto';
 import { ChangePasswordDto } from './types/dtos/change-password.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { VerifyOtpDto } from './types/dtos/VerifyOtpDto';
 
 
 @ApiTags('auth')
@@ -22,6 +23,20 @@ export class AuthController {
   testToken(@Request() req) {
     return req.user;
   }
+  @Post('verify-otp')
+async verifyOtp(@Body() dto: VerifyOtpDto) {
+  const user = await this.userService.findByEmail(dto.email);
+  if (!user || user.resetToken !== dto.otp) {
+    throw new BadRequestException('Code invalide');
+  }
+
+  if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+    throw new BadRequestException('Code expiré');
+  }
+
+  // ✅ OTP valide : on peut autoriser le reset
+  return { message: 'Code valide. Vous pouvez réinitialiser votre mot de passe.' };
+}
 
   @Post('signup')
   async signup(@Body() dto: SignupDto) {
@@ -47,10 +62,16 @@ export class AuthController {
   }
 
 
-  @Post('reset-password')
+  /*@Post('reset-password')
   async resetPassword(@Body() Dto: ResetPasswordDto) {
     return this.authService.resetPassword(Dto.resetToken, Dto.newPassword);
-  }
+  }*/
+
+    @Post('reset-password')
+async resetPassword(@Body() dto: ResetPasswordDto) {
+  return this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
+}
+
 
 
 
@@ -66,7 +87,7 @@ export class AuthController {
   async getProfile(@Request() req) {
     return req.user;
   }
-
+  
 
 }
 
