@@ -77,7 +77,7 @@ export class AuthService {
 
 
 
-
+/*
   async signup(dto: SignupDto) {
     const existingUser = await this.userService.findByEmail(dto.email);
     if (existingUser) {
@@ -100,7 +100,49 @@ export class AuthService {
     });
 
     return this.userRepository.save(newUser);
+  }*/
+
+
+    async signup(dto: SignupDto) {
+  const existingUser = await this.userService.findByEmail(dto.email);
+  if (existingUser) {
+    throw new BadRequestException('User already exists');
   }
+
+  const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+  const role = await this.roleRepository.findOneBy({ name: 'client' }); // ou 'serveur' par défaut
+  if (!role) throw new Error('Rôle invalide');
+
+  const newUser = this.userRepository.create({
+    email: dto.email,
+    name: dto.name,
+    lastname: dto.lastname,
+    password: hashedPassword,
+    phone: dto.phone,
+    role: role,
+  });
+
+  const savedUser = await this.userRepository.save(newUser);
+
+  // ✅ Construction du payload
+  const payload = {
+    sub: savedUser.id,
+    name: savedUser.name,
+    lastname: savedUser.lastname,
+    email: savedUser.email,
+    phone: savedUser.phone,
+    role: savedUser.role.name,
+  };
+
+  const token = this.jwtService.sign(payload);
+
+  // ✅ On renvoie un token comme pour login
+  return {
+    access_token: token,
+  };
+}
+
 
   async login(dto: LoginDto) {
 
@@ -174,21 +216,21 @@ export class AuthService {
     await this.userService.save(user);
   }*/
 
-    async resetPassword(email: string, otp: string, newPassword: string) {
-  const user = await this.userService.findByEmail(email);
-  if (!user || user.resetToken !== otp) {
-    throw new BadRequestException('Code invalide');
-  }
+      async resetPassword(email: string, otp: string, newPassword: string) {
+      const user = await this.userService.findByEmail(email);
+      if (!user || user.resetToken !== otp) {
+        throw new BadRequestException('Code invalide');
+      }
 
-  if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-    throw new BadRequestException('Code expiré');
-  }
+      if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+        throw new BadRequestException('Code expiré');
+      }
 
-  user.password = await bcrypt.hash(newPassword, 10);
-  user.resetToken = null;
-  user.resetTokenExpires = null;
-  await this.userService.save(user);
-}
+      user.password = await bcrypt.hash(newPassword, 10);
+      user.resetToken = null;
+      user.resetTokenExpires = null;
+      await this.userService.save(user);
+    }
 
 
 
