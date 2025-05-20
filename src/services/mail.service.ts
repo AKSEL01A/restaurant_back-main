@@ -25,23 +25,37 @@ constructor(private config: ConfigService) {
   },
 });
 
+
   }
 
   async sendMail({
-    to,
-    subject,
-    text,
-  }: {
-    to: string;
-    subject: string;
-    text: string;
-  }) {
-    await this.transporter.sendMail({
+  to,
+  subject,
+  text,
+}: {
+  to: string;
+  subject: string;
+  text: string;
+}) {
+  console.log('📤 Preparing to send email...');
+  console.log('📨 To:', to);
+  console.log('📧 MAIL_USER:', this.config.get('MAIL_USER'));
+  console.log('🔐 MAIL_PASS:', this.config.get('MAIL_PASS'));
+
+  try {
+    const result = await this.transporter.sendMail({
       from: `"Ton App" <${this.config.get('MAIL_USER')}>`,
       to,
       subject,
       text,
     });
+
+    console.log('✅ Email sent successfully:', result);
+  } catch (error) {
+    console.error('❌ Email send failed:', error);
+    throw new Error('Erreur lors de l’envoi de l’email: ' + error.message);
   }
+}
+
   
 }
