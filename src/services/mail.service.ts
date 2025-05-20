@@ -28,7 +28,7 @@ export class MailService {
   }) {
     try {
       const result = await this.transporter.sendMail({
-        from: `"Ton App" <${this.config.get('MAIL_USER')}>`,
+        from: this.config.get('MAIL_USER'),
         to,
         subject,
         text,
