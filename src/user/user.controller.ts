@@ -49,7 +49,7 @@ export class UserController {
 
   
 @Delete(':id/force-delete')
-@Roles('customer') // ✅ Seul le client peut accéder à cette route
+  @Roles('admin', 'customer', 'serveur', 'manager')// ✅ Seul le client peut accéder à cette route
 async deleteUserWithReservations(@Param('id') id: string) {
   console.log("🧨 Suppression demandée par un client");
   await this.userService.deleteUserAndCancelReservations(id);
