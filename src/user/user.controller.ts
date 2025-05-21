@@ -46,6 +46,16 @@ export class UserController {
     return this.userService.getUser();
   }
 
+  
+@Delete(':id/force-delete')
+@Roles('admin', 'customer')
+async deleteUserWithReservations(@Param('id') id: string) {
+  await this.userService.deleteUserAndCancelReservations(id);
+  return { message: 'Utilisateur supprimé et réservations annulées' };
+}
+
+
+  
   @Patch(':id')
   @Roles('admin', 'customer', 'serveur', 'manager')
   async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() request: any) {

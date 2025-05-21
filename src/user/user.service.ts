@@ -11,6 +11,8 @@ import { User } from './entities/user.entity';
 import { ReservationTable } from 'src/reservations/entities/reservation.entity';
 import { ReservationRepository } from 'src/reservations/repositories/reservation.repository';
 import { MoreThan, Repository } from 'typeorm';
+ import { ReservationStatus } from 'src/reservations/enums/reservation.enums'; // assure-toi de bien importer ça
+
 
 @Injectable()
 export class UserService {
@@ -147,6 +149,41 @@ async createUser(createUserDto: CreateUserDto) {
   //   user.role = role;
   //   return await this.userRepository.save(user);
   // }
+
+
+
+
+async deleteUserAndCancelReservations(userId: string): Promise<void> {
+  const user = await this.userRepository.findOne({
+    where: { id: userId },
+    relations: ['reservations'],
+  });
+
+  if (!user) {
+    throw new NotFoundException("Utilisateur introuvable");
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const futureReservations = await this.reservationRepository
+    .createQueryBuilder('reservation')
+    .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
+    .leftJoin('reservation.user', 'user')
+    .where('user.id = :userId', { userId })
+    .andWhere('reservation.isCancelled = false')
+    .andWhere('reservationTime.date2 > :today', { today })
+    .getMany();
+
+  for (const reservation of futureReservations) {
+    reservation.isCancelled = true;
+    reservation.status = ReservationStatus.CANCELLED;
+    await this.reservationRepository.save(reservation);
+  }
+
+  await this.userRepository.delete(userId);
+}
+
+
 
 
 
