@@ -46,10 +46,12 @@ export class UserController {
     return this.userService.getUser();
   }
 
+
   
 @Delete(':id/force-delete')
-@Roles('admin', 'customer')
+@Roles('customer') // ✅ Seul le client peut accéder à cette route
 async deleteUserWithReservations(@Param('id') id: string) {
+  console.log("🧨 Suppression demandée par un client");
   await this.userService.deleteUserAndCancelReservations(id);
   return { message: 'Utilisateur supprimé et réservations annulées' };
 }
