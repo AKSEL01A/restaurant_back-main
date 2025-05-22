@@ -271,20 +271,16 @@ export class ReservationsService {
 
   
 async getReservationsForUser(userId: number | string): Promise<ReservationTable[]> {
-  try {
-    return await this.reservationRepository.find({
-      where: {
-        user: {
-          id: String(userId) // 🔁 UUID as string
-        }
-      },
-      relations: ['reservationTime', 'table', 'plats'],
-    });
-  } catch (err) {
-    console.error('🔥 ERREUR getReservationsForUser:', err);
-    throw new InternalServerErrorException("Erreur lors du chargement des réservations");
-  }
+  return await this.reservationRepository.find({
+    where: {
+      user: {
+        id: String(userId), // لازم string خاطر PG UUID
+      }
+    },
+    relations: ['reservationTime', 'table', 'plats'],
+  });
 }
+
 
 
   async createReservation(createReservationDto: CreateReservationDto, user) {
