@@ -417,7 +417,7 @@ export class ReservationsService {
 
 
 
-  /*async getReservationById(id: string) {
+  async getReservationById(id: string) {
     const fetchedReservation = await this.reservationRepository.findOneBy({ id: id });
 
     if (!fetchedReservation) {
@@ -425,29 +425,12 @@ export class ReservationsService {
     }
 
     return fetchedReservation;
-  }*/
-
-
-async getReservation() {
-  return this.reservationRepository.find({
-    relations: ['reservationTime', 'table', 'user'],
-  });
-}
-
-async getReservationById(id: string) {
-  const fetchedReservation = await this.reservationRepository.findOne({
-    where: { id },
-    relations: ['reservationTime', 'table', 'user'],
-  });
-
-  if (!fetchedReservation) {
-    throw new BadRequestException(`Reservation with ID ${id} not found`);
   }
 
-  return fetchedReservation;
-}
 
-
+  async getReservation() {
+    return this.reservationRepository.find();
+  }
 
 
 
