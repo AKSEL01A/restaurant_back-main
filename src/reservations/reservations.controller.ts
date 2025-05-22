@@ -98,7 +98,12 @@ async checkAvailability(
     return this.reservationService.getReservationById(id);
   }*/
 
-
+  /// test 
+  @Get('client')
+@Roles('customer')
+async getReservationForClient(@userId() user: User) {
+return this.reservationService.getReservationsForUser(+user.id);
+}
   @Get(':id')
 @Roles('admin', 'customer', 'serveur', 'manager')
 async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
@@ -124,12 +129,6 @@ async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
     return this.reservationService.deleteReservation(id, user);
   }
 
-  /// test 
-  @Get('client')
-@Roles('customer')
-async getReservationForClient(@userId() user: User) {
-return this.reservationService.getReservationsForUser(+user.id);
-}
 
 
 
