@@ -184,9 +184,7 @@ export class TablesService {
     relations: ['restaurantBloc', 'restaurantBloc.restaurant'],
   });
   }
- 
-
-  async delete(id: string) {
+async delete(id: string) {
     const table = await this.TableRepository.findOne({ where: { id } });
 
     if (!table) {
@@ -194,16 +192,11 @@ export class TablesService {
     }
 
     // Vérifie si la table est liée à une réservation non annulée
-    const activeReservations = await this.reservationRepository.count({
-      where: {
-        table: { id },
-        isCancelled: false,
-      },
-    });
-
-    if (activeReservations > 0) {
-      throw new BadRequestException('Impossible de supprimer cette table : elle est actuellement réservée.');
+    const futureResCount = await this.hasFutureReservations(id);
+    if (futureResCount > 0) {
+      throw new BadRequestException(`Impossible de supprimer cette table : elle est actuellement réservée. ${futureResCount}`);
     }
+
 
     await this.TableRepository.delete(id);
     return { message: 'Table supprimée avec succès.' };
