@@ -428,9 +428,12 @@ export class ReservationsService {
   }
 
 
-  async getReservation() {
-    return this.reservationRepository.find();
-  }
+async getReservation() {
+  return this.reservationRepository.find({
+    relations: ['reservationTime', 'table', 'user'],
+  });
+}
+
 
 
 
