@@ -270,13 +270,15 @@ export class ReservationsService {
   // }
 
   
-async getReservationsForUser(userId: number): Promise<ReservationTable[]> {
+async getReservationsForUser(userId: number | string): Promise<ReservationTable[]> {
   try {
+    const userIdStr = String(userId); // ✅ cast en string
+
     return await this.reservationRepository.find({
       where: {
         user: {
-          id: userId
-        } as unknown as User
+          id: userIdStr // ✅ bien string
+        }
       },
       relations: ['reservationTime', 'table', 'plats'],
     });

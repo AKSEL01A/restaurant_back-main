@@ -99,13 +99,14 @@ async checkAvailability(
   }*/
 
   /// test 
-  @Get('client')
+@Get('client')
 @Roles('customer')
 async getReservationForClient(@userId() user: User) {
-return this.reservationService.getReservationsForUser(Number(user.id));
-console.log("🧠 type user.id:", typeof user.id, "value:", user.id);
-
+  console.log('🧠 user:', user);
+  console.log('🧠 typeof user.id:', typeof user.id);
+  return this.reservationService.getReservationsForUser(user.id); // ✅ déjà string
 }
+
   @Get(':id')
 @Roles('admin', 'customer', 'serveur', 'manager')
 async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
