@@ -415,12 +415,12 @@ async getReservationsForUser(userId: string) {
   return this.reservationRepository.createQueryBuilder('reservation')
     .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
     .leftJoinAndSelect('reservation.table', 'table')
-    .leftJoinAndSelect('table.restaurant', 'restaurant') // 👈 très important
+    .leftJoinAndSelect('table.restaurantBloc', 'bloc') // ⬅️ bloc
+    .leftJoinAndSelect('bloc.restaurant', 'restaurant') // ⬅️ actual restaurant
     .where('reservation.user.id = :userId', { userId })
     .orderBy('reservation.createdAt', 'DESC')
     .getMany();
 }
-
 
 
 
