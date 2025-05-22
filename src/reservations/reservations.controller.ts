@@ -91,12 +91,21 @@ async checkAvailability(
     return this.reservationService.createReservation(createReservationDto, user);
   }
 
-  @Get(':id')
+ /* @Get(':id')
   @Roles('admin', 'customer', 'serveur', 'manager')
   async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
     console.log("ID reçu :", id);
     return this.reservationService.getReservationById(id);
-  }
+  }*/
+
+
+  @Get(':id')
+@Roles('admin', 'customer', 'serveur', 'manager')
+async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
+  console.log("ID reçu :", id);
+  return this.reservationService.getReservationById(id);
+}
+
   @Get()
   @Roles('admin', 'customer', 'serveur', 'manager')
   async getReservation() {
