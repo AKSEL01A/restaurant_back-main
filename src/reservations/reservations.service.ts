@@ -471,53 +471,53 @@ async updateReservation(id: string, updateReservationDto: UpdateReservationDto, 
   const reservationDateTime = new Date(`${dateOnly}T${timeSlot.startTime}`);
   const diffInMinutes = Math.floor((reservationDateTime.getTime() - now.getTime()) / 60000);
 
-  // ✅ GESTION D'ANNULATION
+  // ✅ MISE À JOUR DE LA TABLE SI FOURNIE
+  if (updateReservationDto.tableId) {
+    const table = await this.tableRepository.findOneBy({ id: updateReservationDto.tableId });
+    if (!table) throw new NotFoundException(`Table avec l'ID ${updateReservationDto.tableId} introuvable`);
+    reservation.table = table;
+    console.log("🧪 Nouvelle table ID :", reservation.table?.id);
+  }
+
+  // ✅ GESTION ANNULATION
   if (updateReservationDto.isCancelled || updateReservationDto.status === ReservationStatus.CANCELLED) {
     if (diffInMinutes < config.maxCancelTimeBeforeReservation) {
-      throw new BadRequestException(
-        `Vous ne pouvez annuler qu'au moins ${config.maxCancelTimeBeforeReservation} minutes à l'avance.`
-      );
+      throw new BadRequestException(`Vous ne pouvez annuler qu'au moins ${config.maxCancelTimeBeforeReservation} minutes à l'avance.`);
     }
 
     const userNoShowCount = reservation.user?.noShowCount || 0;
     if (userNoShowCount >= config.maxNoShowAllowed) {
-      throw new BadRequestException(
-        `Vous avez atteint la limite de non-présentations (${config.maxNoShowAllowed}). Contactez le restaurant.`
-      );
+      throw new BadRequestException(`Vous avez atteint la limite de non-présentations (${config.maxNoShowAllowed}). Contactez le restaurant.`);
     }
 
     reservation.isCancelled = true;
     reservation.status = ReservationStatus.CANCELLED;
   }
 
-  // ✅ GESTION DE REPORT
+  // ✅ GESTION REPORT
   if (updateReservationDto.isReported) {
     if (reservation.status === ReservationStatus.CANCELLED) {
       throw new BadRequestException(`Vous ne pouvez pas reporter une réservation déjà annulée.`);
     }
 
     if (reservation.reportCount >= config.maxReportAllowed) {
-      throw new BadRequestException(
-        `Vous avez atteint le nombre maximal de reports (${config.maxReportAllowed}).`
-      );
+      throw new BadRequestException(`Vous avez atteint le nombre maximal de reports (${config.maxReportAllowed}).`);
     }
 
     if (diffInMinutes < config.maxReportTimeBeforeReservation) {
-      throw new BadRequestException(
-        `Vous ne pouvez plus reporter cette réservation. Il faut au moins ${config.maxReportTimeBeforeReservation} minutes avant l'heure prévue.`
-      );
+      throw new BadRequestException(`Vous ne pouvez plus reporter cette réservation. Il faut au moins ${config.maxReportTimeBeforeReservation} minutes avant l'heure prévue.`);
     }
 
     reservation.reportCount += 1;
     reservation.status = ReservationStatus.REPORTED;
   }
 
-  // ✅ MODIFICATIONS SIMPLES
+  // ✅ CHAMP SIMPLE
   if (updateReservationDto.customerName) {
     reservation.customerName = updateReservationDto.customerName;
   }
 
-  // ✅ MODIFICATION DU CRENEAU TEMPOREL
+  // ✅ MODIFIER LE CRÉNEAU
   if (updateReservationDto.reservationTime && reservation.reservationTime) {
     const rt = updateReservationDto.reservationTime;
 
@@ -549,9 +549,6 @@ async updateReservation(id: string, updateReservationDto: UpdateReservationDto, 
     reservationTimeId: updated.reservationTime?.id,
   };
 }
-
-
-
 
  async getUnavailableTables(
   restaurantId: string,
