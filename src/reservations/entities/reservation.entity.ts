@@ -38,8 +38,10 @@ export class ReservationTable {
 
 
 
-  @ManyToOne(() => TableRestaurant, { onDelete: 'SET NULL', eager: true, nullable: true })
-  table?: TableRestaurant;
+@ManyToOne(() => TableRestaurant, { onDelete: 'SET NULL', eager: true, nullable: true })
+@JoinColumn({ name: 'tableId' }) // ⬅️ Ajoute ça !
+table?: TableRestaurant;
+
 
   @ManyToMany(() => Plat, { eager: true })
   @JoinTable()
