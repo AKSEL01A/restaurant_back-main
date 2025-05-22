@@ -11,7 +11,6 @@ import { ReservationTable } from './entities/reservation.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateMealTimeDto } from 'src/plats/types/dtos/create-meal-time.dto';
-
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @ApiTags('reservations')
@@ -66,7 +65,6 @@ async checkAvailability(
 
 
 
-
   @Get('count-by-date')
   @Roles('admin')
   async getReservationsCountByDate() {
@@ -91,29 +89,12 @@ async checkAvailability(
     return this.reservationService.createReservation(createReservationDto, user);
   }
 
- /* @Get(':id')
+  @Get(':id')
   @Roles('admin', 'customer', 'serveur', 'manager')
   async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
     console.log("ID reçu :", id);
     return this.reservationService.getReservationById(id);
-  }*/
-
-  /// test 
-@Get('client')
-@Roles('customer')
-async getReservationForClient(@userId() userId: number) {
-  console.log('✅ userId reçu:', userId);
-  return this.reservationService.getReservationsForUser(userId);
-}
-
-
-  @Get(':id')
-@Roles('admin', 'customer', 'serveur', 'manager')
-async getReservationById(@Param('id', ParseUUIDPipe) id: string) {
-  console.log("ID reçu :", id);
-  return this.reservationService.getReservationById(id);
-}
-
+  }
   @Get()
   @Roles('admin', 'customer', 'serveur', 'manager')
   async getReservation() {

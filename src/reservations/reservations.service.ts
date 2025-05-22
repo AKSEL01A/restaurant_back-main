@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ReservationRepository } from './repositories/reservation.repository';
 import { CreateReservationDto } from './types/dtos/create-reservation.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -269,20 +269,6 @@ export class ReservationsService {
 
   // }
 
-  
-async getReservationsForUser(userId: number | string): Promise<ReservationTable[]> {
-  return await this.reservationRepository.find({
-    where: {
-      user: {
-        id: String(userId), // لازم string خاطر PG UUID
-      }
-    },
-    relations: ['reservationTime', 'table', 'plats'],
-  });
-}
-
-
-
   async createReservation(createReservationDto: CreateReservationDto, user) {
     const { tableId, customerName, phone, platIds, reservationTime } = createReservationDto;
 
@@ -445,9 +431,6 @@ async getReservationsForUser(userId: number | string): Promise<ReservationTable[
   async getReservation() {
     return this.reservationRepository.find();
   }
-
-// test 
-
 
 
 
@@ -637,9 +620,6 @@ async getReservationsForUser(userId: number | string): Promise<ReservationTable[
     reservation.status = ReservationStatus.CONFIRMED;
 
     return this.reservationRepository.save(reservation);
-
-
-    
   }
 
 
