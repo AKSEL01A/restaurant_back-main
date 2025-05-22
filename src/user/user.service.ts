@@ -74,45 +74,54 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-async createUser(createUserDto: CreateUserDto) {
-  console.log('➡️ Payload reçu:', createUserDto);
-  const { email, name, lastname, role, phone, password, dateDebutContrat } = createUserDto;
 
-  try {
-    const existingUser = await this.userRepository.findOneBy({ email });
-    if (existingUser) {
-      throw new BadRequestException('Cet utilisateur existe déjà.');
+  async createUser(createUserDto: CreateUserDto) {
+    console.log('➡️ Payload reçu:', createUserDto);
+    const { email, name, lastname, role, phone, dateDebutContrat } = createUserDto;
+
+    try {
+      const existingUser = await this.userRepository.findOneBy({ email });
+      if (existingUser) {
+        throw new BadRequestException('Cet utilisateur existe déjà.');
+      }
+
+      if (role === 'admin') {
+        throw new BadRequestException("Un admin ne peut pas créer un autre admin.");
+      }
+      const password = this.generateRandomPassword();
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      let roleEntity = await this.roleRepository.findOneBy({ name: role });
+      if (!roleEntity) {
+        roleEntity = this.roleRepository.create({ name: role });
+        await this.roleRepository.save(roleEntity);
+      }
+
+      const newUser = this.userRepository.create({
+        email,
+        name,
+        lastname,
+        phone,
+        dateDebutContrat: dateDebutContrat ? new Date(dateDebutContrat) : undefined,
+        password: hashedPassword,
+        role: roleEntity,
+      });
+
+      const savedUser = await this.userRepository.save(newUser);
+
+      // 📨 Envoyer mail bel mot de passe
+      await this.mailService.sendUserWelcomeEmail(email, {
+        name,
+        password, // mot de passe en clair
+      });
+
+      return savedUser;
+
+    } catch (err) {
+      console.error("❌ Erreur lors de la création de l'utilisateur:", err);
+      throw new BadRequestException("Erreur serveur lors de la création de l'utilisateur.");
     }
-
-    if (role === 'admin') {
-      throw new BadRequestException("Un admin ne peut pas créer un autre admin.");
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let roleEntity = await this.roleRepository.findOneBy({ name: role });
-    if (!roleEntity) {
-      roleEntity = this.roleRepository.create({ name: role });
-      await this.roleRepository.save(roleEntity);
-    }
-
-    const newUser = this.userRepository.create({
-      email,
-      name,
-      lastname,
-      phone,
-      dateDebutContrat: dateDebutContrat ? new Date(dateDebutContrat) : undefined,
-      password: hashedPassword,
-      role: roleEntity,
-    });
-
-    return await this.userRepository.save(newUser);
-
-  } catch (err) {
-    console.error("❌ Erreur lors de la création de l'utilisateur:", err);
-    throw new BadRequestException("Erreur serveur lors de la création de l'utilisateur.");
   }
-}
 
   async getUserById(id: string) {
     const user = await this.userRepository.findOne({
