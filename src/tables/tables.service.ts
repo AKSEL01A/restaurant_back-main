@@ -220,4 +220,15 @@ async delete(id: string) {
     console.log('status', status, table);
     return await this.TableRepository.save(table);
   }
+  async hasFutureReservations(tableId: string): Promise<number> {
+    const now = new Date();
+
+    return await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoin('reservation.table', 'table')
+      .leftJoin('reservation.reservationTime', 'rt')
+      .where('table.id = :tableId', { tableId })
+      .andWhere(`(rt.date2 + rt.startTime) > :now`, { now })
+      .getCount();
+  }
 }
