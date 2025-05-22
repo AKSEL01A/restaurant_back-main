@@ -43,7 +43,7 @@ export class ReservationController {
   }
 
 
-  @Get('availability')
+  /*@Get('availability')
 @Roles('admin', 'customer', 'serveur', 'manager')
 async checkAvailability(
   @Query('restaurantId') restaurantId: string,
@@ -61,7 +61,29 @@ async checkAvailability(
   );
 
   return reservedTables;
+}*/
+
+
+@Get('availability')
+@Roles('admin', 'customer', 'serveur', 'manager')
+async checkAvailability(
+  @Query('restaurantId') restaurantId: string,
+  @Query('date') date: string,
+  @Query('time') time: string,
+  @Query('reservationId') reservationId?: string, // ✅ ajouté correctement
+) {
+  if (!restaurantId || !date || !time) {
+    throw new BadRequestException('Paramètres requis manquants');
+  }
+
+  return this.reservationService.getUnavailableTables(
+    restaurantId,
+    date,
+    time,
+    reservationId, // ✅ passé correctement
+  );
 }
+
 
   @Get('client')
 @Roles('customer')

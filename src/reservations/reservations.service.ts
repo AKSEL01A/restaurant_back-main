@@ -539,21 +539,31 @@ async getReservationsForUser(userId: string) {
 
 
 
-  async getUnavailableTables(restaurantId: string, date: string, time: string): Promise<string[]> {
-  const reservations = await this.reservationRepository
+ async getUnavailableTables(
+  restaurantId: string,
+  date: string,
+  time: string,
+  excludeReservationId?: string, // ⬅️ param optionnel
+): Promise<string[]> {
+  const query = this.reservationRepository
     .createQueryBuilder('reservation')
     .leftJoin('reservation.table', 'table')
     .leftJoin('reservation.reservationTime', 'timeSlot')
     .where('timeSlot.date2 = :date', { date })
     .andWhere('timeSlot.startTime <= :time AND timeSlot.endTime > :time', { time })
-    .andWhere('table.restaurant.id = :restaurantId', { restaurantId })
-    .andWhere('reservation.isCancelled = false')
-    .getMany();
+    .andWhere('table.restaurantBlocId = :restaurantId', { restaurantId }) 
+    .andWhere('reservation.isCancelled = false');
+
+  if (excludeReservationId) {
+    query.andWhere('reservation.id != :excludeReservationId', { excludeReservationId });
+  }
+
+  const reservations = await query.getMany();
 
   return reservations
-  .map((res) => res.table?.id)
-  .filter((id): id is string => typeof id === 'string'); // filtre les undefined
-  }
+    .map((res) => res.table?.id)
+    .filter((id): id is string => typeof id === 'string');
+}
 
   async deleteReservation(id: string, user: User) {
     const reservation = await this.reservationRepository.findOne({
