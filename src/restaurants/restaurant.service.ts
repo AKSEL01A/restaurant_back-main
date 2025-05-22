@@ -338,10 +338,10 @@ async deleteBlocFromRestaurant(restaurantId: string, blocId: string): Promise<vo
     }
 
     const bloc = restaurant.restaurantBlocs.find(bloc => bloc.id === blocId);
+    const blocToDelete = await this.restaurantBlocRepository.find({ where: { id: blocId } });
 
     if (!bloc) {
       throw new NotFoundException('Le bloc spécifié n’existe pas.');
-
     }
 
     const hasActiveReservations = bloc.tables.some(table =>
@@ -353,9 +353,9 @@ async deleteBlocFromRestaurant(restaurantId: string, blocId: string): Promise<vo
       throw new BadRequestException('Impossible de supprimer ce bloc : des tables ont des réservations actives.');
     }
 
-
-    restaurant.restaurantBlocs = restaurant.restaurantBlocs.filter(b => b.id !== blocId);
-    await this.restaurantRepository.save(restaurant);
+    await this.restaurantBlocRepository.delete(blocId);
+    //restaurant.restaurantBlocs = restaurant.restaurantBlocs.filter(b => b.id !== blocId);
+    //await this.restaurantRepository.save(restaurant);
   }
 
 }
