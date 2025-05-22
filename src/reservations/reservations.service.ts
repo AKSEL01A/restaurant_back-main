@@ -269,6 +269,17 @@ export class ReservationsService {
 
   // }
 
+  
+async getReservationsForUser(userId: number): Promise<ReservationTable[]> {
+  return this.reservationRepository.find({
+    where: {
+      user: { id: userId } as any
+    },
+    relations: ['reservationTime', 'table', 'plats'],
+  });
+}
+
+
   async createReservation(createReservationDto: CreateReservationDto, user) {
     const { tableId, customerName, phone, platIds, reservationTime } = createReservationDto;
 
@@ -431,6 +442,9 @@ export class ReservationsService {
   async getReservation() {
     return this.reservationRepository.find();
   }
+
+// test 
+
 
 
 
@@ -620,6 +634,9 @@ export class ReservationsService {
     reservation.status = ReservationStatus.CONFIRMED;
 
     return this.reservationRepository.save(reservation);
+
+
+    
   }
 
 

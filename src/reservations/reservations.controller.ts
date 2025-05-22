@@ -11,6 +11,7 @@ import { ReservationTable } from './entities/reservation.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateMealTimeDto } from 'src/plats/types/dtos/create-meal-time.dto';
+
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @ApiTags('reservations')
@@ -114,6 +115,12 @@ async checkAvailability(
     return this.reservationService.deleteReservation(id, user);
   }
 
+  /// test 
+  @Get('client')
+@Roles('customer')
+async getReservationForClient(@userId() user: User) {
+return this.reservationService.getReservationsForUser(+user.id);
+}
 
 
 
