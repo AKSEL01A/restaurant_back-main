@@ -8,11 +8,10 @@ export class MailService {
 
   constructor(private config: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
-      port: 587,
+      service: 'gmail',
       auth: {
-        user: 'apikey',
-        pass: this.config.get('SENDGRID_API_KEY'),
+        user: this.config.get('MAIL_USER'),
+        pass: this.config.get('GMAIL_APP_PASSWORD'),
       },
     });
   }
@@ -40,4 +39,26 @@ export class MailService {
       throw new Error('Erreur lors de l’envoi de l’email: ' + error.message);
     }
   }
+
+  async sendUserWelcomeEmail(email: string, payload: { name: string, password: string }) {
+    const text = `
+Bonjour ${payload.name},
+
+Votre compte a été créé avec succès 🎉
+
+Voici votre mot de passe temporaire : ${payload.password}
+
+Veuillez vous connecter et le modifier dès que possible.
+
+Cordialement,
+L'équipe
+`;
+
+    await this.sendMail({
+      to: email,
+      subject: 'Bienvenue - Vos identifiants',
+      text,
+    });
+  }
+
 }
