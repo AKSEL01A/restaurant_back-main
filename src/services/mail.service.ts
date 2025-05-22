@@ -1,5 +1,4 @@
 import * as nodemailer from 'nodemailer';
-const sgTransport = require('nodemailer-sendgrid-transport');
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -8,13 +7,14 @@ export class MailService {
   private transporter;
 
   constructor(private config: ConfigService) {
-    const options = {
+    this.transporter = nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
       auth: {
-        api_key: this.config.get('SENDGRID_API_KEY'),
+        user: 'apikey',
+        pass: this.config.get('SENDGRID_API_KEY'),
       },
-    };
-
-    this.transporter = nodemailer.createTransport(sgTransport(options)); // ✅ Utilisation correcte
+    });
   }
 
   async sendMail({
