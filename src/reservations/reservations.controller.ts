@@ -63,7 +63,11 @@ async checkAvailability(
   return reservedTables;
 }
 
-
+  @Get('client')
+@Roles('customer')
+async getClientReservations(@userId() user: User) {
+  return this.reservationService.getReservationsForUser(user.id);
+}
 
   @Get('count-by-date')
   @Roles('admin')

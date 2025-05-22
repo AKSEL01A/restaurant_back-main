@@ -411,6 +411,14 @@ export class ReservationsService {
 
 
 
+async getReservationsForUser(userId: string) {
+  return this.reservationRepository.createQueryBuilder('reservation')
+    .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
+    .leftJoinAndSelect('reservation.table', 'table')
+    .where('reservation.user.id = :userId', { userId })
+    .orderBy('reservation.createdAt', 'DESC')
+    .getMany();
+}
 
 
 
