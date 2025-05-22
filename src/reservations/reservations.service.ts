@@ -272,12 +272,10 @@ export class ReservationsService {
   
 async getReservationsForUser(userId: number | string): Promise<ReservationTable[]> {
   try {
-    const userIdStr = String(userId); // ✅ cast en string
-
     return await this.reservationRepository.find({
       where: {
         user: {
-          id: userIdStr // ✅ bien string
+          id: String(userId) // 🔁 UUID as string
         }
       },
       relations: ['reservationTime', 'table', 'plats'],

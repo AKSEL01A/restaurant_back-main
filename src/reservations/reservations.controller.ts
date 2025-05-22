@@ -99,13 +99,15 @@ async checkAvailability(
   }*/
 
   /// test 
+
 @Get('client')
 @Roles('customer')
-async getReservationForClient(@userId() user: User) {
-  console.log('🧠 user:', user);
-  console.log('🧠 typeof user.id:', typeof user.id);
-  return this.reservationService.getReservationsForUser(user.id); // ✅ déjà string
+async getReservationForClient(@userId() userId: number) {
+  console.log('✅ userId:', userId);
+
+  return this.reservationService.getReservationsForUser(userId);
 }
+
 
   @Get(':id')
 @Roles('admin', 'customer', 'serveur', 'manager')
