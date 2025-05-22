@@ -7,11 +7,12 @@ import { AuthModule } from 'src/auth/auth.module';
 import { RoleUser } from 'src/auth/entities/role.entity';
 import { User } from './entities/user.entity';
 import { ReservationTable } from 'src/reservations/entities/reservation.entity';
+import { MailModule } from 'src/services/mail.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, RoleUser, ReservationTable]),
-    AuthModule,
+    AuthModule,MailModule,
   ],
   providers: [UserService, UserRepository],
   exports: [UserService, UserRepository],
