@@ -12,6 +12,7 @@ import { ReservationTable } from 'src/reservations/entities/reservation.entity';
 import { ReservationRepository } from 'src/reservations/repositories/reservation.repository';
 import { MoreThan, Repository } from 'typeorm';
  import { ReservationStatus } from 'src/reservations/enums/reservation.enums'; // assure-toi de bien importer ça
+import { MailService } from 'src/services/mail.service';
 
 
 @Injectable()
@@ -26,6 +27,7 @@ export class UserService {
     @InjectRepository(ReservationTable)
     private readonly reservationRepository: Repository<ReservationTable>,
     private readonly dataSource: DataSource,
+ private readonly mailService: MailService,
   ) { }
   public generateRandomPassword(length = 8): string {
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*';
