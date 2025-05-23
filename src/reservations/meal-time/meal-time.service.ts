@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MealTimeEntity } from 'src/plats/entities/meal-time.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
@@ -121,7 +121,7 @@ export class MealTimeService {
         return this.mealTimeRepository.save(updated);
 
     }
-     async toggleMealTime(id: string): Promise<MealTimeEntity> {
+    async toggleMealTime(id: string): Promise<MealTimeEntity> {
         const mealTime = await this.mealTimeRepository.findOne({ where: { id } });
 
         if (!mealTime) {
@@ -132,6 +132,7 @@ export class MealTimeService {
 
         return this.mealTimeRepository.save(mealTime);
     }
+
     async getMealTimesByRestaurant(restaurantId: string) {
         const mealTimes = await this.mealTimeRepository.find({
             where: { restaurant: { id: restaurantId } },
