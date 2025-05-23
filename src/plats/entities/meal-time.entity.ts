@@ -17,7 +17,8 @@ export class MealTimeEntity {
 
   @Column({ type: 'time' })
   endTime: string;
-
+  @Column({ default: true })
+  isActive: boolean;
 
   @ManyToOne(() => Restaurant, restaurant => restaurant.mealTimes, { onDelete: 'CASCADE' })
   restaurant: Restaurant;
