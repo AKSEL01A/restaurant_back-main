@@ -36,9 +36,9 @@ export class MealTimeController {
         return this.mealTimeService.updateMealTime(id, updateData);
     }
     @Roles('manager')
-    @Delete(':mealId')
-    async deleteMealTime(@Param('mealId') mealId: string) {
-        return this.mealTimeService.deleteMealTime(mealId);
+    @Patch(':id/toggle')
+    async toggleMealTime(@Param('id') id: string): Promise<MealTimeEntity> {
+        return this.mealTimeService.toggleMealTime(id);
     }
 
 
