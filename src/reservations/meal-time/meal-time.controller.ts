@@ -35,11 +35,12 @@ export class MealTimeController {
     ) {
         return this.mealTimeService.updateMealTime(id, updateData);
     }
-    @Roles('manager')
+   @Roles('manager')
     @Patch(':id/toggle')
     async toggleMealTime(@Param('id') id: string): Promise<MealTimeEntity> {
         return this.mealTimeService.toggleMealTime(id);
     }
+
 
 
 
