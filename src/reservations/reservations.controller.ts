@@ -142,11 +142,38 @@ async getClientReservations(@userId() user: User) {
 
 
 
-  @Get('confirm/:reservationId')
+ /* @Get('confirm/:reservationId')
   @Roles('admin', 'customer', 'serveur')
   async confirmReservation(@Param('reservationId') reservationId: string): Promise<ReservationTable> {
     return await this.reservationService.confirmReservationByQrCode(reservationId);
+  }*/
+
+
+    @Get('confirm/:reservationId')
+@Roles('admin', 'customer', 'serveur')
+async confirmReservation(@Param('reservationId') reservationId: string) {
+  const reservation = await this.reservationService.confirmReservationByQrCode(reservationId);
+
+  if (!reservation) {
+    throw new NotFoundException('QR code invalide ou réservation non trouvée.');
   }
+
+  return {
+    message: '✅ Réservation confirmée',
+    reservation: {
+      id: reservation.id,
+      customerName: reservation.customerName,
+      phone: reservation.phone,
+      confirmed: reservation.confirmed,
+      reservationTime: {
+        date2: reservation.reservationTime?.date2,
+        startTime: reservation.reservationTime?.startTime,
+        endTime: reservation.reservationTime?.endTime,
+      },
+    }
+  };
+}
+
 
    @Patch(':id/confirm-by-customer')
   @Roles('admin', 'customer', 'serveur')

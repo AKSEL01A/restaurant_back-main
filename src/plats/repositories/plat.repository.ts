@@ -9,4 +9,4 @@ export class platRepository extends Repository<Plat> {
   constructor(private readonly dataSource: DataSource) {
     super(Plat, dataSource.createEntityManager());
   }
-}
+} 

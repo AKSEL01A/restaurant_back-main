@@ -617,7 +617,7 @@ async updateReservation(id: string, updateReservationDto: UpdateReservationDto, 
 
 
 
-  async confirmReservationByQrCode(reservationId: string): Promise<ReservationTable> {
+/*  async confirmReservationByQrCode(reservationId: string): Promise<ReservationTable> {
     const reservation = await this.reservationRepository.findOneBy({ id: reservationId });
     if (!reservation) {
       throw new NotFoundException('Reservation not found');
@@ -626,7 +626,20 @@ async updateReservation(id: string, updateReservationDto: UpdateReservationDto, 
     reservation.confirmed = true;
     await this.reservationRepository.save(reservation);
     return reservation;
-  }
+  }*/
+
+    async confirmReservationByQrCode(reservationId: string): Promise<ReservationTable | null> {
+  const reservation = await this.reservationRepository.findOne({
+    where: { id: reservationId },
+    relations: ['table', 'reservationTime', 'user'],
+  });
+
+  if (!reservation) return null;
+
+  reservation.confirmed = true;
+  return await this.reservationRepository.save(reservation);
+}
+
 
 
 

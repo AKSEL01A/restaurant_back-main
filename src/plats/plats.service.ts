@@ -10,11 +10,21 @@ export class PlatsService {
     private readonly platRepository: Repository<Plat>,
   ) {}
 
-  async getPopularPlats(): Promise<Plat[]> {
+  /*async getPopularPlats(): Promise<Plat[]> {
     return await this.platRepository.find({
       take: 10, // nombre limité
       order: { name: 'ASC' }, // tri simple, tu peux le changer
       relations: ['mealTimes'], // optionnel si tu veux les mealTimes aussi
     });
-  }
+  }*/
+
+
+    async getPopularPlats(): Promise<Plat[]> {
+  return await this.platRepository.find({
+    take: 10, // nombre limité
+    order: { name: 'ASC' },
+    relations: ['mealTimes', 'menu', 'menu.restaurant'], 
+  });
+}
+
 }
