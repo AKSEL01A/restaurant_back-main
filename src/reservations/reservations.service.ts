@@ -648,6 +648,24 @@ export class ReservationsService {
 
 
 
+async getCurrentReservationForTable(tableId: string) {
+  const now = moment();
+
+  const reservation = await this.reservationRepository
+    .createQueryBuilder('reservation')
+    .leftJoinAndSelect('reservation.reservationTime', 'time')
+    .leftJoinAndSelect('reservation.table', 'table')
+    .where('table.id = :tableId', { tableId })
+    .andWhere('reservation.isCancelled = false')
+    .andWhere('reservation.status = :status', { status: ReservationStatus.ACTIVE })
+    .andWhere('time.date2 = :today', { today: now.format('YYYY-MM-DD') })
+    .andWhere('time.startTime <= :currentTime AND time.endTime > :currentTime', {
+      currentTime: now.format('HH:mm'),
+    })
+    .getOne();
+
+  return reservation ? { reservation } : { reservation: null };
+}
 
 
 

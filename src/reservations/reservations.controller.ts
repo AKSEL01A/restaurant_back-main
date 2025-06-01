@@ -77,6 +77,14 @@ async checkAvailability(
 }*/
 
 
+  @Get('by-table/:tableId')
+@Roles('admin', 'serveur')
+async getCurrentReservationForTable(@Param('tableId') tableId: string) {
+  return await this.reservationService.getCurrentReservationForTable(tableId);
+}
+
+
+
   @Get('availability')
   @Roles('admin', 'customer', 'serveur', 'manager')
   async checkAvailability(
