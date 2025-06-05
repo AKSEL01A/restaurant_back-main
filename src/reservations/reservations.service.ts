@@ -787,8 +787,11 @@ async function isTableAvailable(
   const overlappingReservations = await this.reservationRepository
     .createQueryBuilder('reservation')
     .where('reservation.tableId = :tableId', { tableId })
-    .andWhere('reservation.debutDateTime < :finDateTime', { finDateTime })
-    .andWhere('reservation.finDateTime > :debutDateTime', { debutDateTime })
+    .andWhere('reservation.isCancelled = false') // ✅ ignorer les annulées
+    .andWhere('reservation.reservationTime.startTime < :finTime', { finTime: debutDateTime.toTimeString().substring(0, 8) })
+    .andWhere('reservation.reservationTime.endTime > :startTime', { startTime: debutDateTime.toTimeString().substring(0, 8) })
+    .andWhere('reservation.reservationTime.date2 = :date', { date: debutDateTime.toISOString().split('T')[0] })
+    .leftJoin('reservation.reservationTime', 'reservationTime')
     .getCount();
 
   console.log(`📊 Réservations en conflit: ${overlappingReservations}`);
