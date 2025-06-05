@@ -39,6 +39,10 @@ async countClients(): Promise<number> {
 findAllClients() {
   return this.userService.findByRole('customer');
 }
+   @Get('clients-with-restaurants')
+  getClientsWithRestaurants() {
+    return this.userService.getClientsWithRestaurants();
+  }
   @Post('create')
   @Roles('admin')
   async createUser(@Body() createUserDto: CreateUserDto) {
