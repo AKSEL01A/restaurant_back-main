@@ -186,6 +186,14 @@ export class UserService {
   // }
 
 
+async getClientsWithRestaurants() {
+  return this.userRepository.createQueryBuilder('user')
+    .leftJoinAndSelect('user.reservations', 'reservation')
+    .leftJoinAndSelect('reservation.table', 'table')
+    .leftJoinAndSelect('table.restaurantBloc', 'bloc')
+    .leftJoinAndSelect('bloc.restaurant', 'restaurant')
+    .getMany();
+}
 
 
 async deleteUserAndCancelReservations(userId: string): Promise<void> {
