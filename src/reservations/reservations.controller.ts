@@ -163,10 +163,6 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
   }
 
 
-  @Get('restaurant/:restaurantId')
-  getReservationsByRestaurant(@Param('restaurantId') restaurantId: string) {
-    return this.reservationService.getReservationsByRestaurant(restaurantId);
-  }
 
 
   @Get('confirm/:reservationId')
@@ -189,7 +185,7 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
 async checkAvailabilityByMealTime(
   @Query('restaurantId', ParseUUIDPipe) restaurantId: string,
   @Query('date') date: string,
-  @Query('mealTime') mealTime: string, // ❗️ Not UUID
+  @Query('mealTime') mealTime: string, // 👈 string, pas UUID
 ) {
   if (!restaurantId || !date || !mealTime) {
     throw new BadRequestException('restaurantId, date et mealTime sont requis.');
