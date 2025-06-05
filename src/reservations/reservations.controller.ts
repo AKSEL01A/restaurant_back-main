@@ -163,6 +163,10 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
   }
 
 
+  @Get('restaurant/:restaurantId')
+  getReservationsByRestaurant(@Param('restaurantId') restaurantId: string) {
+    return this.reservationService.getReservationsByRestaurant(restaurantId);
+  }
 
 
   @Get('confirm/:reservationId')
