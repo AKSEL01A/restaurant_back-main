@@ -150,7 +150,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email: dto.email },
-      relations: ['role'],
+      relations: ['role', 'restaurant'],
     });
 
     console.log("Utilisateur trouvé:", user);
@@ -172,6 +172,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role.name,
+      restaurantId: user.restaurant?.id || null  // ✅ ici aussi
+
     };
 
     console.log("Payload JWT envoyé:", payload);
@@ -182,12 +184,12 @@ export class AuthService {
     /*le9dima**return { access_token: token };*/
 
     return {
-    access_token: token,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    role: user.role.name,
-};
+      access_token: token,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role.name,
+    };
 
 
 
