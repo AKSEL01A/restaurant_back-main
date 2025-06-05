@@ -118,17 +118,22 @@ export class UserService {
         dateDebutContrat: dateDebutContrat ? new Date(dateDebutContrat) : undefined,
         password: hashedPassword,
         role: roleEntity,
- restaurant: restaurant || undefined,      });
+        restaurant: restaurant || undefined,
+      });
 
       const savedUser = await this.userRepository.save(newUser);
 
+      const fullUser = await this.userRepository.findOne({
+        where: { id: savedUser.id },
+        relations: ['restaurant', 'role'],
+      });
 
       await this.mailService.sendUserWelcomeEmail(email, {
         name,
         password,
       });
 
-      return savedUser;
+      return fullUser;
 
     } catch (err) {
       console.error("❌ Erreur lors de la création de l'utilisateur:", err);
