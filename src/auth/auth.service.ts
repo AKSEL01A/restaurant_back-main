@@ -189,6 +189,8 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       role: user.role.name,
+     restaurantId: user.restaurant?.id || null
+
     };
 
 
