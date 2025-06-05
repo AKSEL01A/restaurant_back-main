@@ -185,12 +185,12 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
   }
 
 
-  @Get('availability-by-mealtime')
+ @Get('availability-by-mealtime')
 @Roles('admin', 'customer', 'serveur', 'manager')
 async checkAvailabilityByMealTime(
-  @Query('restaurantId', ParseUUIDPipe) restaurantId: string,
+  @Query('restaurantId') restaurantId: string,
   @Query('date') date: string,
-  @Query('mealTime') mealTime: string, // 👈 string, pas UUID
+  @Query('mealTime') mealTime: string,
 ) {
   if (!restaurantId || !date || !mealTime) {
     throw new BadRequestException('restaurantId, date et mealTime sont requis.');
@@ -202,6 +202,7 @@ async checkAvailabilityByMealTime(
     mealTime,
   );
 }
+
 
 
 
