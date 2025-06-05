@@ -378,7 +378,18 @@ export class ReservationsService {
       .orderBy('reservation.createdAt', 'DESC')
       .getMany();
   }
-
+  async getReservationsByRestaurant(restaurantId: string): Promise<ReservationTable[]> {
+    return this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.table', 'table')
+      .leftJoinAndSelect('table.restaurantBloc', 'bloc')
+      .leftJoinAndSelect('bloc.restaurant', 'restaurant')
+      .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
+      .leftJoinAndSelect('reservation.user', 'user')
+      .where('restaurant.id = :restaurantId', { restaurantId })
+      .orderBy('reservationTime.date2', 'DESC')
+      .getMany();
+  }
 
   async getReservationById(id: string) {
     const fetchedReservation = await this.reservationRepository.findOneBy({ id: id });
