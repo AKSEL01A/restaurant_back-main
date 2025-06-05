@@ -779,12 +779,19 @@ async function isTableAvailable(
   debutDateTime: Date,
   finDateTime: Date
 ): Promise<boolean> {
+  console.log("🔍 Vérification de disponibilité de la table...");
+  console.log(`📅 Début : ${debutDateTime.toISOString()}`);
+  console.log(`📅 Fin   : ${finDateTime.toISOString()}`);
+  console.log(`🆔 Table ID: ${tableId}`);
+
   const overlappingReservations = await this.reservationRepository
     .createQueryBuilder('reservation')
     .where('reservation.tableId = :tableId', { tableId })
     .andWhere('reservation.debutDateTime < :finDateTime', { finDateTime })
     .andWhere('reservation.finDateTime > :debutDateTime', { debutDateTime })
     .getCount();
+
+  console.log(`📊 Réservations en conflit: ${overlappingReservations}`);
 
   return overlappingReservations === 0;
 }
