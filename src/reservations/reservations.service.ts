@@ -378,18 +378,7 @@ export class ReservationsService {
       .orderBy('reservation.createdAt', 'DESC')
       .getMany();
   }
-  async getReservationsByRestaurant(restaurantId: string): Promise<ReservationTable[]> {
-    return this.reservationRepository
-      .createQueryBuilder('reservation')
-      .leftJoinAndSelect('reservation.table', 'table')
-      .leftJoinAndSelect('table.restaurantBloc', 'bloc')
-      .leftJoinAndSelect('bloc.restaurant', 'restaurant')
-      .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
-      .leftJoinAndSelect('reservation.user', 'user')
-      .where('restaurant.id = :restaurantId', { restaurantId })
-      .orderBy('reservationTime.date2', 'DESC')
-      .getMany();
-  }
+
 
   async getReservationById(id: string) {
     const fetchedReservation = await this.reservationRepository.findOneBy({ id: id });
@@ -406,28 +395,6 @@ export class ReservationsService {
     return this.reservationRepository.find();
   }
 
- async getUnavailableTablesByMealTime(
-  restaurantId: string,
-  date: string,
-  mealTime: string,
-): Promise<string[]> {
-  const reservations = await this.reservationRepository
-    .createQueryBuilder('reservation')
-    .leftJoin('reservation.table', 'table')
-    .leftJoin('table.restaurantBloc', 'bloc')
-    .leftJoin('bloc.restaurant', 'restaurant')
-    .leftJoin('reservation.reservationTime', 'timeSlot')
-    .where('restaurant.id = :restaurantId', { restaurantId })
-    .andWhere('timeSlot.date2 = :date', { date })
-    .andWhere('timeSlot.name = :mealTime', { mealTime }) // 👈 BREAKFAST, LUNCH, DINNER
-    .andWhere('reservation.isCancelled = false')
-    .select('table.id')
-    .getMany();
-
-  return reservations
-    .map((res) => res.table?.id)
-    .filter((id): id is string => typeof id === 'string');
-}
 
 
   async updateReservation(id: string, updateReservationDto: UpdateReservationDto, user: any) {

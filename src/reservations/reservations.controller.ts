@@ -162,11 +162,6 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
     return this.reservationService.deleteReservation(id, user);
   }
 
-  @Get('restaurant/:restaurantId')
-  getReservationsByRestaurant(@Param('restaurantId') restaurantId: string) {
-    return this.reservationService.getReservationsByRestaurant(restaurantId);
-  }
-
 
 
 
@@ -183,27 +178,6 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
     return this.reservationService.confirmReservationByCustomer(id);
 
   }
-
-
- @Get('availability-by-mealtime')
-@Roles('admin', 'customer', 'serveur', 'manager')
-async checkAvailabilityByMealTime(
-  @Query('restaurantId') restaurantId: string,
-  @Query('date') date: string,
-  @Query('mealTime') mealTime: string,
-) {
-  if (!restaurantId || !date || !mealTime) {
-    throw new BadRequestException('restaurantId, date et mealTime sont requis.');
-  }
-
-  return this.reservationService.getUnavailableTablesByMealTime(
-    restaurantId,
-    date,
-    mealTime,
-  );
-}
-
-
 
 
 }
