@@ -407,6 +407,27 @@ async getReservationsByRestaurant(restaurantId: string): Promise<ReservationTabl
     return this.reservationRepository.find();
   }
 
+  async getUnavailableTablesByMealTime(
+  restaurantId: string,
+  date: string,
+  mealTime: string,
+): Promise<string[]> {
+  const reservations = await this.reservationRepository
+    .createQueryBuilder('reservation')
+    .leftJoin('reservation.table', 'table')
+    .leftJoin('table.restaurantBloc', 'bloc')
+    .leftJoin('bloc.restaurant', 'restaurant')
+    .leftJoin('reservation.reservationTime', 'timeSlot')
+    .where('restaurant.id = :restaurantId', { restaurantId })
+    .andWhere('timeSlot.date2 = :date', { date })
+    .andWhere('timeSlot.name = :mealTime', { mealTime }) // ✅ name = BREAKFAST/LUNCH
+    .andWhere('reservation.isCancelled = false')
+    .getMany();
+
+  return reservations
+    .map((res) => res.table?.id)
+    .filter((id): id is string => typeof id === 'string');
+}
 
 
   async updateReservation(id: string, updateReservationDto: UpdateReservationDto, user: any) {
