@@ -162,6 +162,11 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
     return this.reservationService.deleteReservation(id, user);
   }
 
+  @Get('restaurant/:restaurantId')
+  getReservationsByRestaurant(@Param('restaurantId') restaurantId: string) {
+    return this.reservationService.getReservationsByRestaurant(restaurantId);
+  }
+
 
 
 
