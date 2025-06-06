@@ -41,7 +41,7 @@ export class TablesController {
   }
 
 
-  @Roles('manager', 'Customer', 'admin')
+  @Roles('manager', 'Customer', 'admin', 'serveur')
   @Get('restaurant/:restaurantId')
   async getTablesByRestaurant(@Param('restaurantId') restaurantId: string) {
   return this.tableService.getTablesByRestaurant(restaurantId);

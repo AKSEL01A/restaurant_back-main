@@ -108,6 +108,7 @@ export class ReservationsService {
       throw new UnauthorizedException('Serveur ne correspond pas au restaurant demandé.');
     }
   }
+  
 
   return this.getUnavailableTables(restaurantId, date, time, reservationId);
 }
