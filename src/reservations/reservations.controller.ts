@@ -1,5 +1,19 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { 
+  BadRequestException, 
+  UnauthorizedException, // أضف هذا
+  Body, 
+  Controller, 
+  Delete, 
+  Get, 
+  NotFoundException, 
+  Param, 
+  ParseUUIDPipe, 
+  Patch, 
+  Post, 
+  Query, 
+  Req, 
+  UseGuards 
+} from '@nestjs/common';import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './types/dtos/create-reservation.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -92,7 +106,7 @@ async checkAvailability(
   @Query('date') date: string,
   @Query('time') time: string,
   @Query('reservationId') reservationId: string,
-  @Req() req: AuthenticatedRequest, // أضف هذا
+  @Req() req: AuthenticatedRequest,
 ) {
   console.log("Received restaurantId:", restaurantId);
   console.log("User:", req.user);
@@ -101,21 +115,15 @@ async checkAvailability(
     throw new BadRequestException('Paramètres requis manquants');
   }
 
-  // تأكد من أن serveur ينتمي للـ restaurant المطلوب
-  if (req.user.role === 'serveur') {
-    const userRestaurantId = (await this.userRepository.findOneBy({ id: req.user.sub.toString() })).restaurantId;
-    if (userRestaurantId !== restaurantId) {
-      throw new UnauthorizedException('Serveur ne correspond pas au restaurant demandé.');
-    }
-  }
-
-  return this.reservationService.getUnavailableTables(
+  return this.reservationService.checkAvailabilityWithRoleCheck(
     restaurantId,
     date,
     time,
     reservationId,
+    req.user,
   );
 }
+
 
 
 

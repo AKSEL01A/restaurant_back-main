@@ -85,6 +85,34 @@ export class ReservationsService {
     };
   }
 
+
+
+  async checkAvailabilityWithRoleCheck(
+  restaurantId: string,
+  date: string,
+  time: string,
+  reservationId: string,
+  user: { sub: number; email: string; role: string }
+): Promise<string[]> {
+
+  if (user.role === 'serveur') {
+    const connectedUser = await this.userRepository.findOneBy({ id: user.sub.toString() });
+
+    if (!connectedUser) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const userRestaurantId = connectedUser.restaurant?.id;
+
+    if (userRestaurantId !== restaurantId) {
+      throw new UnauthorizedException('Serveur ne correspond pas au restaurant demandé.');
+    }
+  }
+
+  return this.getUnavailableTables(restaurantId, date, time, reservationId);
+}
+
+
   async getDashboardStatsByRestaurant(restaurantId: string): Promise<{
     totalTables: number;
     cancelledReservations: number;
