@@ -85,25 +85,38 @@ async getCurrentReservationForTable(@Param('tableId') tableId: string) {
 
 
 
-  @Get('availability')
-  @Roles('admin', 'customer', 'serveur', 'manager')
-  async checkAvailability(
-    @Query('restaurantId') restaurantId: string,
-    @Query('date') date: string,
-    @Query('time') time: string,
-    @Query('reservationId') reservationId?: string, // ✅ ajouté correctement
-  ) {
-    if (!restaurantId || !date || !time) {
-      throw new BadRequestException('Paramètres requis manquants');
-    }
+ @Get('availability')
+@Roles('admin', 'customer', 'serveur', 'manager')
+async checkAvailability(
+  @Query('restaurantId') restaurantId: string,
+  @Query('date') date: string,
+  @Query('time') time: string,
+  @Query('reservationId') reservationId: string,
+  @Req() req: AuthenticatedRequest, // أضف هذا
+) {
+  console.log("Received restaurantId:", restaurantId);
+  console.log("User:", req.user);
 
-    return this.reservationService.getUnavailableTables(
-      restaurantId,
-      date,
-      time,
-      reservationId, // ✅ passé correctement
-    );
+  if (!restaurantId || !date || !time) {
+    throw new BadRequestException('Paramètres requis manquants');
   }
+
+  // تأكد من أن serveur ينتمي للـ restaurant المطلوب
+  if (req.user.role === 'serveur') {
+    const userRestaurantId = (await this.userRepository.findOneBy({ id: req.user.sub.toString() })).restaurantId;
+    if (userRestaurantId !== restaurantId) {
+      throw new UnauthorizedException('Serveur ne correspond pas au restaurant demandé.');
+    }
+  }
+
+  return this.reservationService.getUnavailableTables(
+    restaurantId,
+    date,
+    time,
+    reservationId,
+  );
+}
+
 
 
   @UseGuards(JwtAuthGuard, RolesGuard)
