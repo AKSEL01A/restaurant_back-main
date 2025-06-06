@@ -40,12 +40,12 @@ export class TablesController {
     return this.tableService.getTableById(id);
   }
 
+@Roles('manager', 'Customer', 'admin', 'serveur')
+@Get('restaurant/:restaurantId')
+async getTablesByRestaurant(@Param('restaurantId') restaurantId: string) {
+  return this.tableService.getTablesByRestaurantWithReservationStatus(restaurantId);
+}
 
-  @Roles('manager', 'Customer', 'admin', 'serveur')
-  @Get('restaurant/:restaurantId')
-  async getTablesByRestaurant(@Param('restaurantId') restaurantId: string) {
-  return this.tableService.getTablesByRestaurant(restaurantId);
-  }
 
 
   @Roles('manager', 'admin')

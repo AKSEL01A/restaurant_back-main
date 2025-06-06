@@ -72,6 +72,10 @@ export class TablesService {
     });
 
     return await this.TableRepository.save(table);
+
+    
+
+
   }
 
 
@@ -82,7 +86,21 @@ export class TablesService {
 
 
 
+async getTablesByRestaurantWithReservationStatus(restaurantId: string) {
+  const tables = await this.TableRepository.find({
+    where: {
+      restaurantBloc: {
+        restaurant: { id: restaurantId },
+      },
+    },
+    relations: ['restaurantBloc', 'restaurantBloc.restaurant'],
+  });
 
+  return tables.map((table) => ({
+    ...table,
+    isReserved: table.isActive,  // 🔥 هذا السطر هو المفتاح
+  }));
+}
 
 
 

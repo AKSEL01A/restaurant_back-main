@@ -25,6 +25,9 @@ export class TableRestaurant {
   @Column({ type: 'enum', enum: ViewType, nullable: true })
   view: ViewType;
 
+   @Column({ default: false })  // أو true حسب الحالة الافتراضية
+  isActive: boolean;
+
 
   @Column({ nullable: true })
   row: number;
