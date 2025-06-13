@@ -38,9 +38,9 @@ export class ReservationTable {
 
 
 
-@ManyToOne(() => TableRestaurant, { onDelete: 'SET NULL', eager: true, nullable: true })
-@JoinColumn({ name: 'tableId' }) // ⬅️ Ajoute ça !
-table?: TableRestaurant;
+  @ManyToOne(() => TableRestaurant, { onDelete: 'SET NULL', eager: true, nullable: true })
+  @JoinColumn({ name: 'tableId' }) // ⬅️ Ajoute ça !
+  table?: TableRestaurant;
 
 
   @ManyToMany(() => Plat, { eager: true })
@@ -59,6 +59,8 @@ table?: TableRestaurant;
 
   @Column({ type: 'text', nullable: true })
   qrCode: string;
+  @Column({ default: false })
+  reminderSent: boolean;
 
 
   @OneToOne(() => ReservationTime, { eager: true, nullable: true })
@@ -72,5 +74,5 @@ table?: TableRestaurant;
   updatedAt: Date;
 
 
-  
+
 }

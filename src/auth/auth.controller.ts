@@ -24,19 +24,19 @@ export class AuthController {
     return req.user;
   }
   @Post('verify-otp')
-async verifyOtp(@Body() dto: VerifyOtpDto) {
-  const user = await this.userService.findByEmail(dto.email);
-  if (!user || user.resetToken !== dto.otp) {
-    throw new BadRequestException('Code invalide');
-  }
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    const user = await this.userService.findByEmail(dto.email);
+    if (!user || user.resetToken !== dto.otp) {
+      throw new BadRequestException('Code invalide');
+    }
 
-  if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-    throw new BadRequestException('Code expiré');
-  }
+    if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+      throw new BadRequestException('Code expiré');
+    }
 
-  // ✅ OTP valide : on peut autoriser le reset
-  return { message: 'Code valide. Vous pouvez réinitialiser votre mot de passe.' };
-}
+    // ✅ OTP valide : on peut autoriser le reset
+    return { message: 'Code valide. Vous pouvez réinitialiser votre mot de passe.' };
+  }
 
   @Post('signup')
   async signup(@Body() dto: SignupDto) {
@@ -67,10 +67,10 @@ async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.resetPassword(Dto.resetToken, Dto.newPassword);
   }*/
 
-    @Post('reset-password')
-async resetPassword(@Body() dto: ResetPasswordDto) {
-  return this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
-}
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
+  }
 
 
 
@@ -78,48 +78,49 @@ async resetPassword(@Body() dto: ResetPasswordDto) {
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
-    return this.authService.changePassword(req.user.userId, changePasswordDto.oldPassword,
+    console.log(req.user.userId)
+    return this.authService.changePassword(req.user.sub, changePasswordDto.oldPassword,
       changePasswordDto.newPassword,
       changePasswordDto.confirmPassword);
   }
 
   @UseGuards(JwtAuthGuard)
-@Get('me')
-async getProfile(@Request() req) {
-  console.log('📥 Requête /auth/me reçue pour user ID:', req.user.sub);
+  @Get('me')
+  async getProfile(@Request() req) {
+    console.log('📥 Requête /auth/me reçue pour user ID:', req.user.sub);
 
-  const user = await this.userService.findById(req.user.sub);
+    const user = await this.userService.findById(req.user.sub);
 
-  if (!user) {
-    console.error('❌ Utilisateur introuvable avec ID:', req.user.sub);
-    throw new UnauthorizedException('Utilisateur introuvable');
-  }
+    if (!user) {
+      console.error('❌ Utilisateur introuvable avec ID:', req.user.sub);
+      throw new UnauthorizedException('Utilisateur introuvable');
+    }
 
-  // 🛑 نحب كان اللي عندو rôle "serveur"
-  if (user.role.name !== 'serveur') {
-    console.warn('🚫 Accès refusé: rôle ≠ serveur →', user.role.name);
-    throw new UnauthorizedException('Accès réservé aux serveurs uniquement');
-  }
+    // 🛑 نحب كان اللي عندو rôle "serveur"
+    if (user.role.name !== 'serveur') {
+      console.warn('🚫 Accès refusé: rôle ≠ serveur →', user.role.name);
+      throw new UnauthorizedException('Accès réservé aux serveurs uniquement');
+    }
 
-  // 👉 Log détaillé
-  console.log("📦 User récupéré:", user);
-  console.log("🏠 Restaurant lié:", user.restaurant);
+    // 👉 Log détaillé
+    console.log("📦 User récupéré:", user);
+    console.log("🏠 Restaurant lié:", user.restaurant);
 
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    role: user.role.name,
-    restaurant: user.restaurant
-      ? {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role.name,
+      restaurant: user.restaurant
+        ? {
           id: user.restaurant.id,
           name: user.restaurant.name,
         }
-      : null,
-  };
-}
- 
+        : null,
+    };
+  }
+
 
 }
 

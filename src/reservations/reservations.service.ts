@@ -27,6 +27,7 @@ import { MealTimeEntity } from 'src/plats/entities/meal-time.entity';
 import { DataSource, DeepPartial, In, Not, Repository } from 'typeorm';
 import * as QRCode from 'qrcode';
 import { Notification } from '../notifications/entities/notification.entity';
+import { MailService } from 'src/services/mail.service';
 
 
 @Injectable()
@@ -61,6 +62,7 @@ export class ReservationsService {
     private dataSource: DataSource,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private mailService: MailService,
   ) { }
 
 
@@ -184,8 +186,7 @@ export class ReservationsService {
       reservation.status = ReservationStatus.FINISHED;
       await this.reservationRepository.save(reservation);
 
-      // await this.reservationRepository.delete(reservation.id);
-      // console.log(`Reservation ${reservation.id} terminée et supprimée.`);
+
 
 
     }
@@ -195,20 +196,28 @@ export class ReservationsService {
 
 
   @Cron(CronExpression.EVERY_MINUTE)
-  async autoCancelUnconfirmedReservations() {
+  async notifyPendingConfirmations() {
+    console.log("**********************************test")
     const config = await this.systemConfigRepository.findOneBy({});
     if (!config || typeof config.confirmationDeadlineBeforeReservation !== 'number') return;
 
     const deadline = config.confirmationDeadlineBeforeReservation;
+    console.log(deadline);
+
     const now = moment();
 
     const reservations = await this.reservationRepository.find({
+
       where: {
         status: ReservationStatus.ACTIVE,
         confirmedByCustomer: false,
+        reminderSent: false,
       },
-      relations: ['reservationTime'],
+
+
+      relations: ['reservationTime', 'user'],
     });
+    console.log(reservations);
 
     for (const res of reservations) {
       const { date2, startTime } = res.reservationTime || {};
@@ -218,8 +227,17 @@ export class ReservationsService {
       const diff = startMoment.diff(now, 'minutes');
 
       if (startMoment.isAfter(now) && diff <= deadline) {
-        res.status = ReservationStatus.NO_CONFIRMATION;
-        res.isCancelled = true;
+        console.log(res.user?.email);
+
+        if (res.user?.email) {
+          await this.mailService.sendMail({
+            to: res.user.email,
+            subject: 'Rappel de votre réservation',
+            text: `Bonjour,\n\nMerci de confirmer votre réservation prévue le ${date2} à ${startTime}.\n\nSans confirmation, elle sera automatiquement annulée.\n\nMerci pour votre compréhension.`,
+          });
+        }
+
+        res.reminderSent = true;
         await this.reservationRepository.save(res);
       }
     }
@@ -379,6 +397,18 @@ export class ReservationsService {
       .getMany();
   }
 
+  async getReservationsByRestaurant(restaurantId: string): Promise<ReservationTable[]> {
+    return this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.table', 'table')
+      .leftJoinAndSelect('table.restaurantBloc', 'bloc')
+      .leftJoinAndSelect('bloc.restaurant', 'restaurant')
+      .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
+      .leftJoinAndSelect('reservation.user', 'user')
+      .where('restaurant.id = :restaurantId', { restaurantId })
+      .orderBy('reservationTime.date2', 'DESC')
+      .getMany();
+  }
 
   async getReservationById(id: string) {
     const fetchedReservation = await this.reservationRepository.findOneBy({ id: id });
@@ -426,7 +456,6 @@ export class ReservationsService {
         throw new NotFoundException(`Table avec l'ID ${updateReservationDto.tableId} introuvable`);
       }
 
-      // 🔍 Vérifier si la table est déjà réservée dans le même créneau
       const rawDate = reservation.reservationTime?.date2;
       const time = reservation.reservationTime?.startTime;
 
@@ -444,7 +473,7 @@ export class ReservationsService {
             startTime: time,
           },
           isCancelled: false,
-          id: Not(id), // ignorer la réservation en cours
+          id: Not(id),
         },
         relations: ['reservationTime', 'table'],
       });
@@ -453,9 +482,9 @@ export class ReservationsService {
         throw new BadRequestException('Cette table est déjà réservée pour ce créneau.');
       }
 
-      // ✅ OK, on met à jour la table
+
       reservation.table = table;
-      (reservation as any).tableId = table.id; // Forçage éventuel pour l’ORM
+      (reservation as any).tableId = table.id;
       console.log("✅ Nouvelle table affectée :", reservation.table?.id);
     }
 
@@ -478,6 +507,12 @@ export class ReservationsService {
 
       reservation.isCancelled = true;
       reservation.status = ReservationStatus.CANCELLED;
+      const cancelNotif = this.notificationRepository.create({
+        message: `Votre réservation a été annulée.`,
+        user: reservation.user,
+        reservation: reservation,
+      });
+      await this.notificationRepository.save(cancelNotif);
     }
 
     // ✅ GESTION REPORT
@@ -500,6 +535,12 @@ export class ReservationsService {
 
       reservation.reportCount += 1;
       reservation.status = ReservationStatus.REPORTED;
+      const notif = this.notificationRepository.create({
+        message: `Votre réservation a été reportée.`,
+        user: reservation.user,
+        reservation: reservation,
+      });
+      await this.notificationRepository.save(notif);
     }
 
     // ✅ CHAMP SIMPLE

@@ -11,9 +11,10 @@ import { User } from './entities/user.entity';
 import { ReservationTable } from 'src/reservations/entities/reservation.entity';
 import { ReservationRepository } from 'src/reservations/repositories/reservation.repository';
 import { MoreThan, Repository } from 'typeorm';
- import { ReservationStatus } from 'src/reservations/enums/reservation.enums'; // assure-toi de bien importer ça
+import { ReservationStatus } from 'src/reservations/enums/reservation.enums';
 import { MailService } from 'src/services/mail.service';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
+import { UserRole } from 'src/auth/enums/role.enum';
 
 
 @Injectable()
@@ -118,17 +119,22 @@ export class UserService {
         dateDebutContrat: dateDebutContrat ? new Date(dateDebutContrat) : undefined,
         password: hashedPassword,
         role: roleEntity,
- restaurant: restaurant || undefined,      });
+        restaurant: restaurant || undefined,
+      });
 
       const savedUser = await this.userRepository.save(newUser);
 
+      const fullUser = await this.userRepository.findOne({
+        where: { id: savedUser.id },
+        relations: ['restaurant', 'role'],
+      });
 
       await this.mailService.sendUserWelcomeEmail(email, {
         name,
         password,
       });
 
-      return savedUser;
+      return fullUser;
 
     } catch (err) {
       console.error("❌ Erreur lors de la création de l'utilisateur:", err);
@@ -150,11 +156,11 @@ export class UserService {
   }
 
   async findById(id: string) {
-  return this.userRepository.findOne({
-    where: { id },
-    relations: ['role', 'restaurant'],
-  });
-}
+    return this.userRepository.findOne({
+      where: { id },
+      relations: ['role', 'restaurant'],
+    });
+  }
 
 
   async getUser() {
@@ -182,36 +188,35 @@ export class UserService {
 
 
 
+  async deleteUserAndCancelReservations(userId: string): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['reservations'],
+    });
 
-async deleteUserAndCancelReservations(userId: string): Promise<void> {
-  const user = await this.userRepository.findOne({
-    where: { id: userId },
-    relations: ['reservations'],
-  });
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable");
+    }
 
-  if (!user) {
-    throw new NotFoundException("Utilisateur introuvable");
+    const today = new Date().toISOString().split('T')[0];
+
+    const futureReservations = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
+      .leftJoin('reservation.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('reservation.isCancelled = false')
+      .andWhere('reservationTime.date2 > :today', { today })
+      .getMany();
+
+    for (const reservation of futureReservations) {
+      reservation.isCancelled = true;
+      reservation.status = ReservationStatus.CANCELLED;
+      await this.reservationRepository.save(reservation);
+    }
+
+    await this.userRepository.delete(userId);
   }
-
-  const today = new Date().toISOString().split('T')[0];
-
-  const futureReservations = await this.reservationRepository
-    .createQueryBuilder('reservation')
-    .leftJoinAndSelect('reservation.reservationTime', 'reservationTime')
-    .leftJoin('reservation.user', 'user')
-    .where('user.id = :userId', { userId })
-    .andWhere('reservation.isCancelled = false')
-    .andWhere('reservationTime.date2 > :today', { today })
-    .getMany();
-
-  for (const reservation of futureReservations) {
-    reservation.isCancelled = true;
-    reservation.status = ReservationStatus.CANCELLED;
-    await this.reservationRepository.save(reservation);
-  }
-
-  await this.userRepository.delete(userId);
-}
 
 
 

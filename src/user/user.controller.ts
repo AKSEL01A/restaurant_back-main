@@ -16,17 +16,17 @@ export class UserController {
     private readonly dataSource: DataSource
   ) { }
 
-@Get('count-clients')
-@Roles('admin')
-async countClients(): Promise<number> {
-  const result = await this.dataSource.query(`
+  @Get('count-clients')
+  @Roles('admin')
+  async countClients(): Promise<number> {
+    const result = await this.dataSource.query(`
     SELECT COUNT(*)::int AS total
     FROM "user"
     JOIN "role_user" ON "user"."roleId" = "role_user"."id"
     WHERE "role_user"."name" = 'customer'
   `);
-  return result[0].total;
-}
+    return result[0].total;
+  }
 
   @Post(':userId/assign-role/:roleName')
   @UseGuards(RolesGuard)
@@ -35,10 +35,11 @@ async countClients(): Promise<number> {
     return this.userService.assignRoleToUser(userId, roleName);
   }
   @Get('clients')
-   @Roles('admin','manager')
-findAllClients() {
-  return this.userService.findByRole('customer');
-}
+  @Roles('admin', 'manager')
+  findAllClients() {
+    return this.userService.findByRole('customer');
+  }
+
   @Post('create')
   @Roles('admin')
   async createUser(@Body() createUserDto: CreateUserDto) {
@@ -57,17 +58,17 @@ findAllClients() {
   }
 
 
-  
-@Delete(':id/force-delete')
+
+  @Delete(':id/force-delete')
   @Roles('admin', 'customer', 'serveur', 'manager')// ✅ Seul le client peut accéder à cette route
-async deleteUserWithReservations(@Param('id') id: string) {
-  console.log("🧨 Suppression demandée par un client");
-  await this.userService.deleteUserAndCancelReservations(id);
-  return { message: 'Utilisateur supprimé et réservations annulées' };
-}
+  async deleteUserWithReservations(@Param('id') id: string) {
+    console.log("🧨 Suppression demandée par un client");
+    await this.userService.deleteUserAndCancelReservations(id);
+    return { message: 'Utilisateur supprimé et réservations annulées' };
+  }
 
 
-  
+
   @Patch(':id')
   @Roles('admin', 'customer', 'serveur', 'manager')
   async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() request: any) {

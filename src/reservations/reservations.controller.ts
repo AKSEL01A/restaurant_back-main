@@ -11,7 +11,6 @@ import { ReservationTable } from './entities/reservation.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Request } from '@nestjs/common';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { CreateMealTimeDto } from 'src/plats/types/dtos/create-meal-time.dto';
 
 
 interface AuthenticatedRequest extends Request {
@@ -83,7 +82,7 @@ async checkAvailability(
     @Query('restaurantId') restaurantId: string,
     @Query('date') date: string,
     @Query('time') time: string,
-    @Query('reservationId') reservationId?: string, // ✅ ajouté correctement
+    @Query('reservationId') reservationId?: string,
   ) {
     if (!restaurantId || !date || !time) {
       throw new BadRequestException('Paramètres requis manquants');
@@ -93,7 +92,7 @@ async checkAvailability(
       restaurantId,
       date,
       time,
-      reservationId, // ✅ passé correctement
+      reservationId,
     );
   }
 
@@ -155,6 +154,10 @@ async checkAvailability(
   }
 
 
+  @Get('restaurant/:restaurantId')
+  getReservationsByRestaurant(@Param('restaurantId') restaurantId: string) {
+    return this.reservationService.getReservationsByRestaurant(restaurantId);
+  }
 
 
   @Get('confirm/:reservationId')

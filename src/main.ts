@@ -67,9 +67,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // ✅ ACTIVER CORS ICI (et PAS dans create())
   app.enableCors({
-    origin: true, // ou ['http://localhost:4200']
+    origin: true,
     credentials: true,
   });
 

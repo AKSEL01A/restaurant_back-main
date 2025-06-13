@@ -53,31 +53,56 @@ export class AuthService {
   }*/
 
 
-    async sendResetPasswordEmail(email: string) {
-  const user = await this.userService.findByEmail(email);
-  if (!user) {
-    throw new NotFoundException('Utilisateur introuvable');
+  async sendResetPasswordEmail(email: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 🔐 OTP à 6 chiffres
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // expire dans 10 minutes
+
+    user.resetToken = otp;
+    user.resetTokenExpires = expires;
+    await this.userService.save(user);
+
+    await this.mailService.sendMail({
+      to: user.email,
+      subject: 'Code de réinitialisation de mot de passe',
+      text: `Votre code de réinitialisation est : ${otp}. Il est valable 10 minutes.`,
+    });
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 🔐 OTP à 6 chiffres
-  const expires = new Date(Date.now() + 10 * 60 * 1000); // expire dans 10 minutes
 
-  user.resetToken = otp;
-  user.resetTokenExpires = expires;
-  await this.userService.save(user);
 
-  await this.mailService.sendMail({
-    to: user.email,
-    subject: 'Code de réinitialisation de mot de passe',
-    text: `Votre code de réinitialisation est : ${otp}. Il est valable 10 minutes.`,
-  });
-}
+
+
+  /*
+    async signup(dto: SignupDto) {
+      const existingUser = await this.userService.findByEmail(dto.email);
+      if (existingUser) {
+        throw new BadRequestException('User already exists');
+      }
   
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+  
+      // const role = await this.roleRepository.findOneBy({ name: dto.role });
+      // if (!role) throw new Error('Invalid role');
+  
+  
+      const newUser = this.userRepository.create({
+        email: dto.email,
+        name: dto.name,
+        lastname: dto.lastname,
+        password: hashedPassword,
+        phone: dto.phone,
+        // role,
+      });
+  
+      return this.userRepository.save(newUser);
+    }*/
 
 
-
-
-/*
   async signup(dto: SignupDto) {
     const existingUser = await this.userService.findByEmail(dto.email);
     if (existingUser) {
@@ -86,9 +111,8 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // const role = await this.roleRepository.findOneBy({ name: dto.role });
-    // if (!role) throw new Error('Invalid role');
-
+    const role = await this.roleRepository.findOneBy({ name: 'customer' });
+    if (!role) throw new Error('Rôle invalide');
 
     const newUser = this.userRepository.create({
       email: dto.email,
@@ -96,52 +120,28 @@ export class AuthService {
       lastname: dto.lastname,
       password: hashedPassword,
       phone: dto.phone,
-      // role,
+      role: role,
     });
 
-    return this.userRepository.save(newUser);
-  }*/
+    const savedUser = await this.userRepository.save(newUser);
 
+    // ✅ Construction du payload
+    const payload = {
+      sub: savedUser.id,
+      name: savedUser.name,
+      lastname: savedUser.lastname,
+      email: savedUser.email,
+      phone: savedUser.phone,
+      role: savedUser.role.name,
+    };
 
-    async signup(dto: SignupDto) {
-  const existingUser = await this.userService.findByEmail(dto.email);
-  if (existingUser) {
-    throw new BadRequestException('User already exists');
+    const token = this.jwtService.sign(payload);
+
+    // ✅ On renvoie un token comme pour login
+    return {
+      access_token: token,
+    };
   }
-
-  const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-  const role = await this.roleRepository.findOneBy({ name: 'customer' });
-  if (!role) throw new Error('Rôle invalide');
-
-  const newUser = this.userRepository.create({
-    email: dto.email,
-    name: dto.name,
-    lastname: dto.lastname,
-    password: hashedPassword,
-    phone: dto.phone,
-    role: role,
-  });
-
-  const savedUser = await this.userRepository.save(newUser);
-
-  // ✅ Construction du payload
-  const payload = {
-    sub: savedUser.id,
-    name: savedUser.name,
-    lastname: savedUser.lastname,
-    email: savedUser.email,
-    phone: savedUser.phone,
-    role: savedUser.role.name,
-  };
-
-  const token = this.jwtService.sign(payload);
-
-  // ✅ On renvoie un token comme pour login
-  return {
-    access_token: token,
-  };
-}
 
 
   async login(dto: LoginDto) {
@@ -150,7 +150,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email: dto.email },
-      relations: ['role'],
+      relations: ['role', 'restaurant'],
     });
 
     console.log("Utilisateur trouvé:", user);
@@ -172,6 +172,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role.name,
+      restaurantId: user.restaurant?.id || null  // ✅ ici aussi
+
     };
 
     console.log("Payload JWT envoyé:", payload);
@@ -182,12 +184,14 @@ export class AuthService {
     /*le9dima**return { access_token: token };*/
 
     return {
-    access_token: token,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    role: user.role.name,
-};
+      access_token: token,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role.name,
+      restaurantId: user.restaurant?.id || null
+
+    };
 
 
 
@@ -216,21 +220,21 @@ export class AuthService {
     await this.userService.save(user);
   }*/
 
-      async resetPassword(email: string, otp: string, newPassword: string) {
-      const user = await this.userService.findByEmail(email);
-      if (!user || user.resetToken !== otp) {
-        throw new BadRequestException('Code invalide');
-      }
-
-      if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-        throw new BadRequestException('Code expiré');
-      }
-
-      user.password = await bcrypt.hash(newPassword, 10);
-      user.resetToken = null;
-      user.resetTokenExpires = null;
-      await this.userService.save(user);
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user || user.resetToken !== otp) {
+      throw new BadRequestException('Code invalide');
     }
+
+    if (!user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+      throw new BadRequestException('Code expiré');
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetToken = null;
+    user.resetTokenExpires = null;
+    await this.userService.save(user);
+  }
 
 
 
@@ -245,7 +249,9 @@ export class AuthService {
     }
 
     console.log("Utilisateur trouvé :", user.email);
+
     const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+
     console.log("Ancien mot de passe valide :", isPasswordValid);
 
     if (!isPasswordValid) {

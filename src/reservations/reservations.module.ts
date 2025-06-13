@@ -18,12 +18,13 @@ import { SystemConfigRepository } from 'src/config/repositories/system-config.re
 import { SystemConfigService } from 'src/config/config.service';
 import { MealTimeEntity } from 'src/plats/entities/meal-time.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { MailService } from 'src/services/mail.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ReservationTable, Restaurant, TableRestaurant, User, MenuRestaurant, Plat, ReservationTime, SystemConfig, MealTimeEntity]), RestaurantModule, NotificationsModule, // ✅ important pour exposer NotificationRepository
   ],
   controllers: [ReservationController],
-  providers: [ReservationsService, ReservationRepository, ReservationTimeRepository, SystemConfigRepository, SystemConfigService],
+  providers: [ReservationsService, ReservationRepository, ReservationTimeRepository, SystemConfigRepository, SystemConfigService, MailService],
   exports: [ReservationsService, ReservationRepository, ReservationTimeRepository, SystemConfigRepository, SystemConfigService],
 })
 export class ReservationsModule { }
