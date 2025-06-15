@@ -428,150 +428,173 @@ export class ReservationsService {
 
 
   async updateReservation(id: string, updateReservationDto: UpdateReservationDto, user: any) {
-    const reservation = await this.reservationRepository.findOne({
-      where: { id },
-      relations: ['user', 'reservationTime', 'table'],
+  const reservation = await this.reservationRepository.findOne({
+    where: { id },
+    relations: ['user', 'reservationTime', 'table'],
+  });
+
+  if (!reservation) {
+    throw new NotFoundException(`Réservation avec l'ID ${id} introuvable`);
+  }
+
+  const config = await this.systemconfigService.getConfig();
+  const now = new Date();
+
+  const timeSlot = reservation.reservationTime;
+  if (!timeSlot || !timeSlot.date2 || !timeSlot.startTime) {
+    throw new BadRequestException('Créneau horaire de la réservation manquant ou incomplet.');
+  }
+
+  const dateOnly = new Date(timeSlot.date2).toISOString().split('T')[0];
+  const reservationDateTime = new Date(`${dateOnly}T${timeSlot.startTime}`);
+  const diffInMinutes = Math.floor((reservationDateTime.getTime() - now.getTime()) / 60000);
+
+  let modificationDetected = false;
+
+  // ✅ CHANGEMENT DE TABLE
+  if (updateReservationDto.tableId) {
+    const table = await this.tableRepository.findOneBy({ id: updateReservationDto.tableId });
+    if (!table) {
+      throw new NotFoundException(`Table avec l'ID ${updateReservationDto.tableId} introuvable`);
+    }
+
+    const rawDate = reservation.reservationTime?.date2;
+    const time = reservation.reservationTime?.startTime;
+
+    if (!rawDate || !time) {
+      throw new BadRequestException('Date ou heure de réservation manquante pour vérification de disponibilité.');
+    }
+
+    const dateOnly = new Date(rawDate).toISOString().split('T')[0];
+
+    const existingReservation = await this.reservationRepository.findOne({
+      where: {
+        table: { id: updateReservationDto.tableId },
+        reservationTime: {
+          date2: new Date(dateOnly),
+          startTime: time,
+        },
+        isCancelled: false,
+        id: Not(id),
+      },
+      relations: ['reservationTime', 'table'],
     });
 
-    if (!reservation) {
-      throw new NotFoundException(`Réservation avec l'ID ${id} introuvable`);
+    if (existingReservation) {
+      throw new BadRequestException('Cette table est déjà réservée pour ce créneau.');
     }
 
-    const config = await this.systemconfigService.getConfig();
-    const now = new Date();
+    reservation.table = table;
+    (reservation as any).tableId = table.id;
+    modificationDetected = true;
 
-    const timeSlot = reservation.reservationTime;
-    if (!timeSlot || !timeSlot.date2 || !timeSlot.startTime) {
-      throw new BadRequestException('Créneau horaire de la réservation manquant ou incomplet.');
-    }
-
-    const dateOnly = new Date(timeSlot.date2).toISOString().split('T')[0];
-    const reservationDateTime = new Date(`${dateOnly}T${timeSlot.startTime}`);
-    const diffInMinutes = Math.floor((reservationDateTime.getTime() - now.getTime()) / 60000);
-
-    // ✅ MISE À JOUR DE LA TABLE SI FOURNIE
-    if (updateReservationDto.tableId) {
-      const table = await this.tableRepository.findOneBy({ id: updateReservationDto.tableId });
-      if (!table) {
-        throw new NotFoundException(`Table avec l'ID ${updateReservationDto.tableId} introuvable`);
-      }
-
-      const rawDate = reservation.reservationTime?.date2;
-      const time = reservation.reservationTime?.startTime;
-
-      if (!rawDate || !time) {
-        throw new BadRequestException('Date ou heure de réservation manquante pour vérification de disponibilité.');
-      }
-
-      const dateOnly = new Date(rawDate).toISOString().split('T')[0];
-
-      const existingReservation = await this.reservationRepository.findOne({
-        where: {
-          table: { id: updateReservationDto.tableId },
-          reservationTime: {
-            date2: new Date(dateOnly),
-            startTime: time,
-          },
-          isCancelled: false,
-          id: Not(id),
-        },
-        relations: ['reservationTime', 'table'],
-      });
-
-      if (existingReservation) {
-        throw new BadRequestException('Cette table est déjà réservée pour ce créneau.');
-      }
-
-
-      reservation.table = table;
-      (reservation as any).tableId = table.id;
-      console.log("✅ Nouvelle table affectée :", reservation.table?.id);
-    }
-
-
-
-    // ✅ GESTION ANNULATION
-    if (updateReservationDto.isCancelled || updateReservationDto.status === ReservationStatus.CANCELLED) {
-      if (diffInMinutes < config.maxCancelTimeBeforeReservation) {
-        throw new BadRequestException(
-          `Vous ne pouvez annuler qu'au moins ${config.maxCancelTimeBeforeReservation} minutes à l'avance.`
-        );
-      }
-
-      const userNoShowCount = reservation.user?.noShowCount || 0;
-      if (userNoShowCount >= config.maxNoShowAllowed) {
-        throw new BadRequestException(
-          `Vous avez atteint la limite de non-présentations (${config.maxNoShowAllowed}).`
-        );
-      }
-
-      reservation.isCancelled = true;
-      reservation.status = ReservationStatus.CANCELLED;
-      const cancelNotif = this.notificationRepository.create({
-        message: `Votre réservation a été annulée.`,
-        user: reservation.user,
-        reservation: reservation,
-      });
-      await this.notificationRepository.save(cancelNotif);
-    }
-
-    // ✅ GESTION REPORT
-    if (updateReservationDto.isReported) {
-      if (reservation.status === ReservationStatus.CANCELLED) {
-        throw new BadRequestException(`Vous ne pouvez pas reporter une réservation annulée.`);
-      }
-
-      if (reservation.reportCount >= config.maxReportAllowed) {
-        throw new BadRequestException(
-          `Nombre maximal de reports atteint (${config.maxReportAllowed}).`
-        );
-      }
-
-      if (diffInMinutes < config.maxReportTimeBeforeReservation) {
-        throw new BadRequestException(
-          `Vous ne pouvez plus reporter cette réservation. Minimum requis : ${config.maxReportTimeBeforeReservation} minutes avant.`
-        );
-      }
-
-      reservation.reportCount += 1;
-      reservation.status = ReservationStatus.REPORTED;
-      const notif = this.notificationRepository.create({
-        message: `Votre réservation a été reportée.`,
-        user: reservation.user,
-        reservation: reservation,
-      });
-      await this.notificationRepository.save(notif);
-    }
-
-    // ✅ CHAMP SIMPLE
-    if (updateReservationDto.customerName) {
-      reservation.customerName = updateReservationDto.customerName;
-    }
-
-    // ✅ MODIFIER LE CRÉNEAU
-    if (updateReservationDto.reservationTime && reservation.reservationTime) {
-      const rt = updateReservationDto.reservationTime;
-
-      if (rt.startTime) reservation.reservationTime.startTime = rt.startTime;
-      if (rt.date2) reservation.reservationTime.date2 = new Date(rt.date2);
-      if (rt.name) reservation.reservationTime.name = rt.name;
-
-      await this.reservationTimeRepository.save(reservation.reservationTime);
-    }
-
-    const updated = await this.reservationRepository.save(reservation);
-
-    return {
-      id: updated.id,
-      isCancelled: updated.isCancelled,
-      status: updated.status,
-      customerName: updated.customerName,
-      reservationDate: updated.reservationTime?.date2,
-      userId: updated.user?.id,
-      tableId: updated.table?.id,
-      reservationTimeId: updated.reservationTime?.id,
-    };
+    await this.notificationRepository.save({
+      message: `Votre réservation a été déplacée vers une nouvelle table.`,
+      user: reservation.user,
+      reservation,
+    });
   }
+
+  // ✅ ANNULATION
+  if (updateReservationDto.isCancelled || updateReservationDto.status === ReservationStatus.CANCELLED) {
+    if (diffInMinutes < config.maxCancelTimeBeforeReservation) {
+      throw new BadRequestException(
+        `Vous ne pouvez annuler qu'au moins ${config.maxCancelTimeBeforeReservation} minutes à l'avance.`
+      );
+    }
+
+    const userNoShowCount = reservation.user?.noShowCount || 0;
+    if (userNoShowCount >= config.maxNoShowAllowed) {
+      throw new BadRequestException(
+        `Vous avez atteint la limite de non-présentations (${config.maxNoShowAllowed}).`
+      );
+    }
+
+    reservation.isCancelled = true;
+    reservation.status = ReservationStatus.CANCELLED;
+
+    await this.notificationRepository.save({
+      message: `Votre réservation a été annulée.`,
+      user: reservation.user,
+      reservation,
+    });
+  }
+
+  // ✅ REPORT
+  if (updateReservationDto.isReported) {
+    if (reservation.status === ReservationStatus.CANCELLED) {
+      throw new BadRequestException(`Vous ne pouvez pas reporter une réservation annulée.`);
+    }
+
+    if (reservation.reportCount >= config.maxReportAllowed) {
+      throw new BadRequestException(
+        `Nombre maximal de reports atteint (${config.maxReportAllowed}).`
+      );
+    }
+
+    if (diffInMinutes < config.maxReportTimeBeforeReservation) {
+      throw new BadRequestException(
+        `Vous ne pouvez plus reporter cette réservation. Minimum requis : ${config.maxReportTimeBeforeReservation} minutes avant.`
+      );
+    }
+
+    reservation.reportCount += 1;
+    reservation.status = ReservationStatus.REPORTED;
+
+    await this.notificationRepository.save({
+      message: `Votre réservation a été reportée.`,
+      user: reservation.user,
+      reservation,
+    });
+  }
+
+  // ✅ CHAMP SIMPLE
+  if (updateReservationDto.customerName) {
+    reservation.customerName = updateReservationDto.customerName;
+    modificationDetected = true;
+  }
+
+  // ✅ MODIFICATION DU CRÉNEAU
+  if (updateReservationDto.reservationTime && reservation.reservationTime) {
+    const rt = updateReservationDto.reservationTime;
+
+    if (rt.startTime) reservation.reservationTime.startTime = rt.startTime;
+    if (rt.date2) reservation.reservationTime.date2 = new Date(rt.date2);
+    if (rt.name) reservation.reservationTime.name = rt.name;
+
+    await this.reservationTimeRepository.save(reservation.reservationTime);
+    modificationDetected = true;
+
+    await this.notificationRepository.save({
+      message: `Le créneau de votre réservation a été modifié.`,
+      user: reservation.user,
+      reservation,
+    });
+  }
+
+  const updated = await this.reservationRepository.save(reservation);
+
+  // ✅ Si une modification simple détectée
+  if (modificationDetected) {
+    await this.notificationRepository.save({
+      message: `Votre réservation a été mise à jour.`,
+      user: reservation.user,
+      reservation: updated,
+    });
+  }
+
+  return {
+    id: updated.id,
+    isCancelled: updated.isCancelled,
+    status: updated.status,
+    customerName: updated.customerName,
+    reservationDate: updated.reservationTime?.date2,
+    userId: updated.user?.id,
+    tableId: updated.table?.id,
+    reservationTimeId: updated.reservationTime?.id,
+  };
+}
+
 
 
   async getUnavailableTables(
