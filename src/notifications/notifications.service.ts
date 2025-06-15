@@ -23,4 +23,15 @@ export class NotificationsService {
 
     }
 
+    async markAllAsRead(userId: number) {
+  return this.notificationRepository
+    .createQueryBuilder()
+    .update()
+    .set({ isRead: true })
+    .where("userId = :userId AND isRead = false", { userId })
+    .execute();
+}
+
+
+
 }

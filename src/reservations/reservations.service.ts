@@ -376,7 +376,7 @@ export class ReservationsService {
     };
     await this.reservationTimeRepository.save(reservationTimeWithReservation);
     const notif = this.notificationRepository.create({
-      message: `Nouvelle réservation par ${customerName} pour la table ${table.id}`,
+      message: `Votre réservation pour la table "${table.name}" a été enregistrée avec succès.`,
       user: connectedUser,
       reservation: reservation,
     });
