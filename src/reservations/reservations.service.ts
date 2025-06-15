@@ -577,7 +577,7 @@ export class ReservationsService {
   // ✅ Si une modification simple détectée
   if (modificationDetected) {
     await this.notificationRepository.save({
-      message: `Votre réservation a été mise à jour.`,
+      message: `Votre réservation a été mise à jour .`,
       user: reservation.user,
       reservation: updated,
     });
