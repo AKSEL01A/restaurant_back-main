@@ -34,30 +34,7 @@ export class RestaurantService {
       private tableRepository: Repository<TableRestaurant>
     ) { }
 
-  // async getRestaurantById(id: string) {
-  //   const fetchedRestaurant = await this.restaurantRepository.findOne({
-  //     where: { id },
-  //     relations: ['restaurantBlocs', 'restaurantBlocs.bloc', 'images',]
-  //   });
 
-
-  //   if (!fetchedRestaurant) {
-  //     throw new BadRequestException(`Restaurant with ID ${id} not found`);
-  //   }
-
-  //   if (fetchedRestaurant.hourly) {
-  //     const [start, end] = fetchedRestaurant.hourly.split('-');
-  //     const nowHour = new Date().getHours();
-
-  //     const startHour = parseInt(start);
-  //     const endHour = parseInt(end);
-
-  //     const isOpen = nowHour >= startHour && nowHour < endHour;
-  //     fetchedRestaurant.status = isOpen ? RestaurantStatus.OUVERT : RestaurantStatus.FERME;
-  //   }
-
-  //   return fetchedRestaurant;
-  // }
 
   async countRestaurants(): Promise<number> {
     return this.restaurantRepository.count();
@@ -87,7 +64,6 @@ export class RestaurantService {
         if (startHour < endHour) {
           isOpen = nowHour >= startHour && nowHour < endHour;
         } else {
-          // pour les horaires de nuit (ex: 20-02)
           isOpen = nowHour >= startHour || nowHour < endHour;
         }
       }
@@ -127,12 +103,6 @@ export class RestaurantService {
       where.isActive = false;
     }
 
-
-    // modification
-    /* const restaurants = await this.restaurantRepository.find({
-       where,
-       relations: ['restaurantBlocs', 'restaurantBlocs.bloc'],
-     });*/
 
 
     const restaurants = await this.restaurantRepository.find({
@@ -274,56 +244,6 @@ export class RestaurantService {
     return { message: `Restaurant with ID ${id} deleted successfully` };
   }
 
-  // async updateRestaurant(id: string, updateRestaurantDto: UpdateRestaurantDto) {
-  //   if (!Object.keys(updateRestaurantDto).length) {
-  //     throw new BadRequestException("Aucune donnée à mettre à jour.");
-  //   }
-
-  //   const restaurant = await this.restaurantRepository.findOne({
-  //     where: { id },
-  //     relations: ['restaurantBlocs'],
-  //   });
-
-  //   if (!restaurant) {
-  //     throw new NotFoundException(`Restaurant avec ID ${id} introuvable.`);
-  //   }
-
-  //   if (updateRestaurantDto.restaurantBlocs && updateRestaurantDto.restaurantBlocs.length > 0) {
-  //     const blocsDto: RestaurantBloc[] = await Promise.all(
-  //       updateRestaurantDto.restaurantBlocs.map(async (blocDto) => {
-  //         const blocEntity = new RestaurantBloc();
-  //         blocEntity.bloc = { id: blocDto.blocId } as Bloc;
-  //         blocEntity.maxTables = blocDto.maxTables;
-  //         blocEntity.maxChaises = blocDto.maxChaises;
-  //         blocEntity.restaurant = restaurant;
-
-  //         if ((blocDto as any).id) {
-  //           blocEntity.id = (blocDto as any).id;
-  //         }
-  //         console.log("ttttttttttttttttttttttttttttttttttttttttttttttttttttttttt")
-  //         console.log(blocEntity)
-  //         // Appel asynchrone pour récupérer les tables
-  //         blocEntity.tables = await this.tableRepository.find({
-  //           where: { restaurantBloc: { id: blocDto.blocId } },
-  //           relations: ['restaurantBloc'] // si tu veux charger la relation
-  //         });
-  //         console.log(blocEntity)
-  //         console.log("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
-  //         return blocEntity;
-  //       })
-  //     );
-
-  //     restaurant.restaurantBlocs = blocsDto;
-  //     delete updateRestaurantDto.restaurantBlocs;
-  //   }
-
-
-
-  //   Object.assign(restaurant, updateRestaurantDto);
-
-
-  //   return instanceToPlain(await this.restaurantRepository.save(restaurant));
-  // }
 
 
   async patchRestaurantInfo(id: string, updateDto: UpdateRestaurantDto) {

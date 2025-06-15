@@ -12,9 +12,7 @@ import { RestaurantBlocDto } from './types/dto/create-restaurant-bloc.dto';
 
 
 
-///restaurant main
-// @ApiBearerAuth('access-token')
-//@UseGuards(JwtAuthGuard, RolesGuard)
+
 @ApiBearerAuth('access-token')
 @ApiTags('restaurants')
 @Controller('restaurant')

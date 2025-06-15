@@ -656,15 +656,65 @@ export class ReservationsService {
 
 
 
+  // async confirmReservationByCustomer(id: string): Promise<ReservationTable> {
+  //   const reservation = await this.reservationRepository.findOne({
+  //     where: { id },
+  //   });
+
+  //   if (!reservation) {
+  //     throw new NotFoundException('Réservation introuvable');
+  //   }
+
+  //   if (reservation.confirmedByCustomer) {
+  //     throw new BadRequestException('Réservation déjà confirmée par le client');
+  //   }
+
+  //   reservation.confirmedByCustomer = true;
+  //   reservation.status = ReservationStatus.CONFIRMED_BY_CUSTOMER;
+
+  //   const saved = await this.reservationRepository.save(reservation);
+  //   const notif: DeepPartial<Notification> = {
+  //     message: `Réservation confirmée par ${reservation.customerName} pour la table ${reservation.table?.id}`,
+  //     user: reservation.user,
+  //     reservation: saved
+  //   };
+
+  //   await this.notificationRepository.save(notif);
+
+
+  //   return saved;
+  // }
+
+
+
+
   async confirmReservationByCustomer(id: string): Promise<ReservationTable> {
     const reservation = await this.reservationRepository.findOne({
       where: { id },
+      relations: ['table', 'user'], // au cas où tu as besoin de ces relations
     });
 
     if (!reservation) {
       throw new NotFoundException('Réservation introuvable');
     }
 
+    // Si le client n'a pas confirmé → annulation automatique
+    if (!reservation.confirmedByCustomer) {
+      reservation.status = ReservationStatus.CANCELLED;
+      const cancelled = await this.reservationRepository.save(reservation);
+
+      const notif: DeepPartial<Notification> = {
+        message: `Réservation annulée automatiquement faute de confirmation par ${reservation.customerName}`,
+        user: reservation.user,
+        reservation: cancelled,
+      };
+
+      await this.notificationRepository.save(notif);
+
+      return cancelled;
+    }
+
+    // Sinon → confirmer normalement
     if (reservation.confirmedByCustomer) {
       throw new BadRequestException('Réservation déjà confirmée par le client');
     }
@@ -673,21 +723,17 @@ export class ReservationsService {
     reservation.status = ReservationStatus.CONFIRMED_BY_CUSTOMER;
 
     const saved = await this.reservationRepository.save(reservation);
+
     const notif: DeepPartial<Notification> = {
       message: `Réservation confirmée par ${reservation.customerName} pour la table ${reservation.table?.id}`,
       user: reservation.user,
-      reservation: saved
+      reservation: saved,
     };
 
     await this.notificationRepository.save(notif);
 
-
     return saved;
   }
-
-
-
-
 
 
 
