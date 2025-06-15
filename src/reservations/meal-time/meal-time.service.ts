@@ -69,58 +69,50 @@ export class MealTimeService {
 
         return this.mealTimeRepository.save(mealTime);
     }
-    async updateMealTime(id: string, updateData: Partial<MealTimeEntity>): Promise<MealTimeEntity> {
-        const mealTime = await this.mealTimeRepository.findOne({
-            where: { id },
-            relations: ['restaurant'], // fetch relation
-        });
+   async updateMealTime(id: string, updateData: Partial<MealTimeEntity>): Promise<MealTimeEntity> {
+    const mealTime = await this.mealTimeRepository.findOne({
+        where: { id },
+        relations: ['restaurant'],
+    });
 
-        if (!mealTime) {
-            throw new NotFoundException(`MealTime with ID ${id} not found`);
-        }
+    if (!mealTime) {
+        throw new NotFoundException(`MealTime with ID ${id} not found`);
+    }
 
-        const restaurantId = mealTime.restaurant.id;
+    const restaurantId = mealTime.restaurant.id;
 
-        const allMealTimes = await this.mealTimeRepository.find({
-            where: {
-                restaurant: {
-                    id: restaurantId
-                }
-            },
-            relations: ['restaurant'], // optional, in case you need them later
-        });
+    const allMealTimes = await this.mealTimeRepository.find({
+        where: {
+            restaurant: {
+                id: restaurantId
+            }
+        },
+        relations: ['restaurant'],
+    });
 
-        const newStart = updateData.startTime ?? mealTime.startTime;
-        const newEnd = updateData.endTime ?? mealTime.endTime;
-        const newType = updateData.mealTime ?? mealTime.mealTime;
+    const newStart = updateData.startTime ?? mealTime.startTime;
+    const newEnd = updateData.endTime ?? mealTime.endTime;
+    const newType = updateData.mealTime ?? mealTime.mealTime;
 
-        for (const other of allMealTimes) {
-            if (other.id === id) continue; // Skip the current entry
+    for (const other of allMealTimes) {
+        if (other.id === id) continue;
 
-            // Rules: breakfast < lunch < dinner (non-overlapping)
-            if (
-                (newType === 'BREAKFAST' && (other.mealTime === 'LUNCH' || other.mealTime === 'DINNER')) ||
-                (newType === 'LUNCH' && (other.mealTime === 'BREAKFAST' || other.mealTime === 'DINNER')) ||
-                (newType === 'DINNER' && (other.mealTime === 'BREAKFAST' || other.mealTime === 'LUNCH'))
-            ) {
-                // Check for time overlap
-                if (
-                    (newStart < other.endTime && newEnd > other.startTime)
-                ) {
-                    throw new BadRequestException(`Invalid time overlap with existing ${other.mealTime}`);
-                }
+        if (other.mealTime !== newType) {
+            if (newStart < other.endTime && newEnd > other.startTime) {
+                throw new BadRequestException(`Time overlaps with another meal type: ${other.mealTime}`);
             }
         }
-
-        const updated = await this.mealTimeRepository.preload({ id, ...updateData });
-
-        if (!updated) {
-            throw new NotFoundException(`MealTime with ID ${id} not found`);
-        }
-
-        return this.mealTimeRepository.save(updated);
-
     }
+
+    const updated = await this.mealTimeRepository.preload({ id, ...updateData });
+
+    if (!updated) {
+        throw new NotFoundException(`MealTime with ID ${id} not found`);
+    }
+
+    return this.mealTimeRepository.save(updated);
+}
+
     async toggleMealTime(id: string): Promise<MealTimeEntity> {
         const mealTime = await this.mealTimeRepository.findOne({ where: { id } });
 
